@@ -815,5 +815,108 @@
       "Minimum 10 years experience required for the role"
     ],
     "action": "skip"
+  },
+  "openai-9144413d": {
+    "score": 3,
+    "reasons": [
+      "Strong technical skills in Python, Java, and machine learning.",
+      "Internship experiences in AI and software engineering roles with effective project outcomes.",
+      "Relevant education in Computer Engineering with a focus on technology management."
+    ],
+    "gaps": [],
+    "redFlags": [
+      "Requires 5+ years of experience in technical deployment, candidate is early in career."
+    ],
+    "action": "apply_and_outreach"
+  },
+  "anthropic-d7f7a0fe": {
+    "score": 3,
+    "reasons": [
+      "Strong relevant technical skills in Python and web development tools like React and TypeScript.",
+      "Experience with AI models and frameworks aligns with the company's focus on human capability and skill development.",
+      "Relevant internship experience showcases ability to ship production-quality features."
+    ],
+    "gaps": [],
+    "redFlags": [
+      "Candidate is still pursuing a Master's degree, which may not align with the preferred 6+ years of experience.",
+      "Location preference is for New York, but company operates in multiple major cities."
+    ],
+    "action": "apply_and_outreach"
+  },
+  "anthropic-8ba63f7d": {
+    "score": 3,
+    "reasons": [
+      "Strong technical skills in AI and software development that align with the company's focus on Agents/MCP and LLM evaluation.",
+      "Experience as an AI Engineer Intern and Software Engineer Team Lead showcases leadership and hands-on abilities.",
+      "Candidate's location in New York matches the job requirement, enhancing potential fit."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "anthropic-883f4879": {
+    "score": 3,
+    "reasons": [
+      "Candidate has relevant technical skills in Python, Bash, and asset management automation.",
+      "Experience with IT operations and developing automated solutions aligns with some job responsibilities.",
+      "Candidate is currently pursuing relevant education, but lacks direct asset management role experience."
+    ],
+    "gaps": [
+      "No direct experience implementing a comprehensive asset management program.",
+      "Limited experience with vendor relationships for hardware purchasing and disposal.",
+      "No experience specifically mentioned with e-waste programs."
+    ],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "anthropic-16130be3": {
+    "score": 3,
+    "reasons": [
+      "Strong technical skills in languages and frameworks relevant to software engineering and AI.",
+      "Recent internship experience related to AI and data handling, aligning with job requirements.",
+      "Good educational background in technology management and computer engineering."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "cursor-071f70b3": {
+    "score": 4,
+    "reasons": [
+      "Strong background in AI and software engineering aligns with the technical needs of the Field Engineer role.",
+      "Experience with coding evaluations and machine learning suits the role's focus on customer engagements in AI tooling.",
+      "Strong communication skills demonstrated in previous roles, matching the customer-facing aspect of the job."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "sierra-3769a16a": {
+    "score": 2,
+    "reasons": [
+      "Lacks required 5-7 years experience in Sales Engineering or customer-facing roles.",
+      "The role is heavily focused on public sector and government clients, which isn't a clear part of the candidate's experience.",
+      "Location mismatch is significant with the preferred company location being San Francisco, which is not aligned with the candidate's current location in New York."
+    ],
+    "gaps": [
+      "Extensive experience with U.S federal, state, or local government customers",
+      "Demonstrated experience in relationship-building with executives"
+    ],
+    "redFlags": [
+      "Minimum 5 years of experience in a related field",
+      "Location preference for San Francisco"
+    ],
+    "action": "skip"
+  },
+  "ramp-e07f5f16": {
+    "score": 3,
+    "reasons": [
+      "Strong programming skills in Python and knowledge of cloud technologies which aligns with the role's requirements.",
+      "Relevant internship experience in AI and systems engineering, though no direct corporate security experience.",
+      "Meets education requirements, but lacks extensive hands-on experience in a corporate security environment."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_and_outreach"
   }
 }

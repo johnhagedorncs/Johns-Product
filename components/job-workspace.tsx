@@ -2,16 +2,22 @@
 
 import { useEffect, useState } from "react";
 import { ExternalLink, Loader2, TriangleAlert } from "lucide-react";
-import { draftLinkedInForJob, tailorResumeForJob } from "@/app/actions/ai";
+import {
+  draftLinkedInForJob,
+  findPeopleForJob,
+  tailorResumeForJob,
+} from "@/app/actions/ai";
 import { Chip } from "@/components/chip";
 import { ClockBadge } from "@/components/clock-badge";
 import { DraftBox } from "@/components/draft-box";
 import { FitRing } from "@/components/fit-ring";
 import { Button } from "@/components/ui/button";
+import { plainDescription } from "@/lib/board-match";
 import { initials } from "@/lib/draft-text";
 import { getOutreachForJob, isFreshPosting, shouldApplyToday } from "@/lib/jobs";
 import { locationLabel } from "@/lib/locations";
-import { peopleForRole, type RolePerson } from "@/lib/people";
+import { readPeopleCache, writePeopleCache } from "@/lib/people-cache";
+import { mergeRolePeople, peopleForRole, type RolePerson } from "@/lib/people";
 import { getProfile } from "@/lib/profile";
 import {
   defaultSeekerPrefs,
@@ -53,6 +59,9 @@ export function JobWorkspace({ job }: { job: Job }) {
   const [error, setError] = useState("");
   const [seeker, setSeeker] = useState<SeekerPrefs>(defaultSeekerPrefs);
   const [companyPeople, setCompanyPeople] = useState<RolePerson[]>([]);
+  const [matchHooks, setMatchHooks] = useState<string[]>([]);
+  const [lookingUp, setLookingUp] = useState(true);
+  const [peopleError, setPeopleError] = useState("");
 
   useEffect(() => {
     const prefs = parseSeekerPrefs(localStorage.getItem(SEEKER_STORAGE_KEY));
@@ -61,7 +70,37 @@ export function JobWorkspace({ job }: { job: Job }) {
       getSeedTrackerRows(),
       parseTrackerOverrides(localStorage.getItem(TRACKER_STORAGE_KEY))
     );
-    setCompanyPeople(peopleForRole(job, rows, getOutreachForJob(job.id)));
+    const saved = peopleForRole(job, rows, getOutreachForJob(job.id));
+    const cached = readPeopleCache(job, prefs.resumeText);
+    if (cached) {
+      setMatchHooks(cached.hooks);
+      setCompanyPeople(mergeRolePeople(saved, cached.people));
+      setLookingUp(false);
+      return;
+    }
+    setCompanyPeople(saved);
+    setLookingUp(true);
+    setPeopleError("");
+    let cancelled = false;
+    findPeopleForJob(job, prefs)
+      .then((found) => {
+        if (cancelled) return;
+        writePeopleCache(job, prefs.resumeText, found);
+        setMatchHooks(found.hooks);
+        setCompanyPeople(mergeRolePeople(saved, found.people));
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        setPeopleError(
+          err instanceof Error ? err.message : "Could not look up people"
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setLookingUp(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [job]);
 
   function currentSeeker(): SeekerPrefs {
@@ -158,12 +197,27 @@ export function JobWorkspace({ job }: { job: Job }) {
           <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
             People at {job.company}
           </p>
-          {companyPeople.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">
-              No one at {job.company} is saved yet. Paste a LinkedIn profile to
-              draft a note.
+          {matchHooks.length > 0 ? (
+            <p className="mt-2 text-sm text-muted-foreground">
+              Sharing {matchHooks.join(", ")}
             </p>
-          ) : (
+          ) : null}
+          {lookingUp ? (
+            <p className="mt-3 inline-flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-3.5 animate-spin" />
+              Looking for people at {job.company} who share your resume…
+            </p>
+          ) : null}
+          {peopleError ? (
+            <p className="mt-3 text-sm text-destructive">{peopleError}</p>
+          ) : null}
+          {!lookingUp && companyPeople.length === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">
+              No one at {job.company} shares a school, employer, or group on
+              your resume.
+            </p>
+          ) : null}
+          {companyPeople.length > 0 ? (
             <ul className="mt-3 flex flex-col gap-3">
               {companyPeople.map((person) => (
                 <li key={person.name} className="flex items-center gap-3">
@@ -173,11 +227,21 @@ export function JobWorkspace({ job }: { job: Job }) {
                   <div>
                     <h3 className="font-semibold">{person.name}</h3>
                     <p className="text-sm text-muted-foreground">{person.detail}</p>
+                    {person.url ? (
+                      <a
+                        href={person.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-primary"
+                      >
+                        Open profile
+                      </a>
+                    ) : null}
                   </div>
                 </li>
               ))}
             </ul>
-          )}
+          ) : null}
         </article>
       </div>
     <div className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
@@ -216,9 +280,10 @@ export function JobWorkspace({ job }: { job: Job }) {
               </Chip>
             ))}
           </div>
-          <p className="mt-4 max-h-80 overflow-auto text-sm leading-6 text-muted-foreground">
-            {job.description || "No description returned by the board."}
-          </p>
+          <div className="mt-4 max-h-80 overflow-auto text-sm leading-6 whitespace-pre-wrap text-muted-foreground">
+            {plainDescription(job.description) ||
+              "No description returned by the board."}
+          </div>
           <a
             href={job.jobUrl}
             target="_blank"

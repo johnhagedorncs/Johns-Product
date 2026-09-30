@@ -45,6 +45,14 @@ describe("board match", () => {
     expect(plainDescription(12)).toBe("");
     expect(stripHtml("<p>Hello <b>NYC</b></p>")).toBe("Hello NYC");
     expect(plainDescription("<div>Build APIs</div>")).toContain("Build APIs");
+    expect(
+      plainDescription(
+        "&lt;h2&gt;About the role&lt;/h2&gt; &lt;p&gt;You&#39;ll build RL systems.&lt;/p&gt; &lt;ul&gt;&lt;li&gt;Own training&lt;/li&gt;&lt;/ul&gt;"
+      )
+    ).toBe("About the role\nYou'll build RL systems.\n\n• Own training");
+    expect(plainDescription("&amp;lt;p&amp;gt;Safe &amp;amp; beneficial&#x27;s&amp;lt;/p&amp;gt;")).toBe(
+      "Safe & beneficial's"
+    );
   });
 });
 

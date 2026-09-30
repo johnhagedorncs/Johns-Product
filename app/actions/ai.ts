@@ -1,5 +1,7 @@
 "use server";
 
+import { hasOpenAIConfig } from "@/lib/ai/client";
+import { findConnectablePeople } from "@/lib/ai/find-people";
 import { draftFromLinkedInPaste } from "@/lib/ai/linkedin-draft";
 import { readResumeText, tailorResume } from "@/lib/ai/tailor-resume";
 import { getProfile } from "@/lib/profile";
@@ -12,6 +14,7 @@ import {
 import { loadTailors, saveTailor } from "@/lib/tailor-store.server";
 import type { TailorResult } from "@/lib/ai/tailor-resume";
 import type { LinkedInDraft } from "@/lib/ai/linkedin-draft";
+import type { RolePerson } from "@/lib/people";
 import type { Job } from "@/lib/types";
 
 export async function tailorResumeForJob(
@@ -29,6 +32,22 @@ export async function tailorResumeForJob(
     resume
   );
   return saveTailor(key, result);
+}
+
+export async function findPeopleForJob(
+  job: Job,
+  seekerInput: SeekerPrefs
+): Promise<{ hooks: string[]; people: RolePerson[] }> {
+  if (!hasOpenAIConfig()) {
+    throw new Error("Add the model names in .env to look up people.");
+  }
+  const seeker = normalizeSeeker(seekerInput);
+  const resume = seeker.resumeText.trim() || (await readResumeText());
+  return findConnectablePeople(
+    job,
+    profileForSeeker(getProfile(), seeker),
+    resume
+  );
 }
 
 export async function draftLinkedInForJob(

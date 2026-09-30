@@ -9,6 +9,16 @@ vi.mock("server-only", () => ({}));
 vi.mock("@/app/actions/ai", () => ({
   tailorResumeForJob: vi.fn(),
   draftLinkedInForJob: vi.fn(),
+  findPeopleForJob: vi.fn(async () => ({
+    hooks: ["UCSB", "Handshake"],
+    people: [
+      {
+        name: "Ada Lovelace",
+        detail: "Engineer · UCSB alum",
+        url: "https://company.example/ada",
+      },
+    ],
+  })),
 }));
 
 const job: Job = {
@@ -57,5 +67,14 @@ describe("job workspace people", () => {
     expect(screen.getByText("Resume · alex.pdf")).toBeInTheDocument();
     expect(screen.getByText("People at Sierra")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Priya Shah" })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("heading", { name: "Ada Lovelace" })
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/Paste a LinkedIn profile/i)).not.toBeInTheDocument();
+    expect(screen.getByText("Sharing UCSB, Handshake")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open profile" })).toHaveAttribute(
+      "href",
+      "https://company.example/ada"
+    );
   });
 });

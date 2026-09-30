@@ -34,22 +34,46 @@ export function tierLetter(tier: number): JobTier {
   return "C";
 }
 
+function decodeEntities(value: string): string {
+  return value
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'")
+    .replace(/&mdash;/gi, "—")
+    .replace(/&ndash;/gi, "–")
+    .replace(/&#(\d+);/g, (_, code: string) => String.fromCodePoint(Number(code)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, code: string) =>
+      String.fromCodePoint(parseInt(code, 16))
+    );
+}
+
 export function stripHtml(html: string): string {
-  return html
+  let text = html;
+  for (let pass = 0; pass < 2; pass += 1) {
+    const decoded = decodeEntities(text);
+    if (decoded === text) break;
+    text = decoded;
+  }
+  return text
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "\n• ")
+    .replace(/<\/(p|div|h[1-6]|li|ul|ol|section)>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
-    .replace(/\s+/g, " ")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n[ \t]+/g, "\n")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
 export function plainDescription(value: unknown): string {
   if (typeof value !== "string") return "";
-  const text = value.includes("<") ? stripHtml(value) : value.trim();
+  const text = /[<&]/.test(value) ? stripHtml(value) : value.trim();
   return text.slice(0, 12000);
 }
 
