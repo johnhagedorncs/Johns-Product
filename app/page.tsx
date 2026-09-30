@@ -1,6 +1,7 @@
 import { InboxBoard } from "@/components/inbox-board";
 
-export const dynamic = "force-dynamic";
+// Scans and AI scoring run as server actions on this page; give them room on Vercel.
+export const maxDuration = 60;
 
 export default function HomePage() {
   return (
@@ -8,8 +9,8 @@ export default function HomePage() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Inbox</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Roles from your watch list show up after Scan now. Apply the same day,
-          then draft a note.
+          Fresh new-grad roles from your watch list, SimplifyJobs, and LinkedIn — scored against
+          your resume. Apply the same day, then send a warm note.
         </p>
       </div>
       <InboxBoard />

@@ -37,11 +37,11 @@
 
 | ID | Requirement | Priority | Acceptance criterion |
 |----|-------------|----------|----------------------|
-| R1 | Scan watch list; show new roles, early-career first | P0 | Open `/scan` → see seeded jobs grouped by tier; each row shows title, company, age, fit. |
+| R1 | Scan watch list (Greenhouse/Ashby/Lever), the SimplifyJobs new-grad list, and LinkedIn's public job search; show new roles, best fit first | P0 | Scan now → roles from all sources, de-duplicated; each row shows title, company, age, fit, and which boards it came from. |
 | R2 | Job detail: fit, apply-today clock, ranked contacts, editable drafts | P0 | Open `/jobs/[id]` → fit 1–5, hours since post, ≥2 contacts with "why," draft text in a textarea. |
 | R3 | Log outreach status; persist after refresh | P0 | On tracker, set status to Messaged → refresh → status unchanged (localStorage). |
 | R4 | Follow-ups due today | P1 | `/tracker` highlights rows where `next_followup <= today`. |
-| R5 | Paste job URL (prototype: match seed or stub) | P1 | Home URL field → navigates to job detail or shows "not in watch list yet." |
+| R5 | Paste any job URL | P1 | Home URL field → Greenhouse, Ashby, Lever, LinkedIn, Workday, or career-page link opens a scored job detail; bad link → inline message, no navigation. |
 | R6 | Empty tracker on first visit | P1 | Tracker with no rows shows empty state + link to Scan. |
 
 **Build order:** 1) seed `data/jobs.json` + `data/outreach.json` → 2) `lib/` fit + rank display → 3) `/scan`, `/jobs/[id]`, `/tracker` → 4) Plan A skill (outside repo).
@@ -50,7 +50,7 @@
 - Auto-send LinkedIn messages, connection requests, or InMail.
 - LinkedIn API integration or headless login.
 - Auto-apply / Copilot control from the web app.
-- Scraping `simplify.jobs` or LinkedIn at scale.
+- Scraping LinkedIn profiles or anything behind a login. (Reading the public SimplifyJobs GitHub list and a handful of LinkedIn's logged-out job-search pages per scan is in scope.)
 
 **Do NOT change:** Harbor tokens in `DESIGN.md`; drafts-only outreach policy.
 

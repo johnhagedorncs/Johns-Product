@@ -23,10 +23,8 @@ describe("ai client", () => {
     expect(hasOpenAIConfig()).toBe(false);
   });
 
-  it("hasOpenAIConfig is true when env complete", async () => {
+  it("hasOpenAIConfig only needs the API key", async () => {
     vi.stubEnv("OPENAI_API_KEY", "sk-test");
-    vi.stubEnv("AI_MODEL_FAST", "fast");
-    vi.stubEnv("AI_MODEL_SMART", "smart");
     const { hasOpenAIConfig } = await import("@/lib/ai/client");
     expect(hasOpenAIConfig()).toBe(true);
   });
@@ -45,12 +43,12 @@ describe("ai client", () => {
     expect(() => getOpenAIClient()).toThrow(/OPENAI_API_KEY/);
   });
 
-  it("resolveModel throws when model env missing", async () => {
-    vi.stubEnv("OPENAI_API_KEY", "sk-test");
+  it("resolveModel falls back to default models when env is unset", async () => {
+    vi.stubEnv("AI_MODEL_FAST", "");
+    vi.stubEnv("AI_MODEL_SMART", "  ");
     const { resolveModel } = await import("@/lib/ai/client");
-    expect(() => resolveModel("fast")).toThrow(/AI_MODEL_FAST/);
-    vi.stubEnv("AI_MODEL_FAST", "fast-model");
-    expect(() => resolveModel("smart")).toThrow(/AI_MODEL_SMART/);
+    expect(resolveModel("fast")).toBe("gpt-4o-mini");
+    expect(resolveModel("smart")).toBe("gpt-4o");
   });
 
   it("getOpenAIClient reuses singleton", async () => {

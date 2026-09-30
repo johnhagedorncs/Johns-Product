@@ -3,47 +3,74 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Radar } from "lucide-react";
+import { enrichJobs } from "@/app/actions/jobs";
+import { JobUrlForm } from "@/components/job-url-form";
 import { JobWorkspace } from "@/components/job-workspace";
-import { readInboxCache } from "@/lib/inbox-client-cache";
-import { isInboxRevealed } from "@/lib/inbox-session";
+import { applyEnrichment } from "@/lib/enrich";
+import { findInboxJob, saveAiFits, upsertInboxJob } from "@/lib/inbox-store";
+import { effectiveResume, parseSeekerPrefs, SEEKER_STORAGE_KEY, textHash } from "@/lib/seeker";
 import type { Job } from "@/lib/types";
 
-type Gate = "loading" | "need-scan" | "missing" | "ready";
+type Gate = "loading" | "missing" | "ready";
 
 export function ScannedJob({ id }: { id: string }) {
   const [job, setJob] = useState<Job | null>(null);
   const [gate, setGate] = useState<Gate>("loading");
+  const [reading, setReading] = useState(false);
+  const [readError, setReadError] = useState("");
 
   useEffect(() => {
-    if (!isInboxRevealed()) {
-      setJob(null);
-      setGate("need-scan");
-      return;
-    }
-    const match = readInboxCache()?.jobs.find((item) => item.id === id) ?? null;
+    const decoded = decodeURIComponent(id);
+    const match = findInboxJob(decoded);
     setJob(match);
     setGate(match ? "ready" : "missing");
+    if (!match || (match.description && match.fit?.basis === "ai")) return;
+
+    let cancelled = false;
+    const seeker = parseSeekerPrefs(localStorage.getItem(SEEKER_STORAGE_KEY));
+    setReading(true);
+    enrichJobs([match], seeker)
+      .then((result) => {
+        if (cancelled) return;
+        const [update] = result.jobs;
+        if (!update) return;
+        const next = applyEnrichment([match], [update])[0];
+        saveAiFits([update], textHash(effectiveResume(seeker)));
+        upsertInboxJob(next);
+        setJob(next);
+        if (update.error) setReadError(update.error);
+      })
+      .catch(() => {
+        if (!cancelled) setReadError("Could not reach the server to read this posting.");
+      })
+      .finally(() => {
+        if (!cancelled) setReading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   if (gate === "loading") {
     return <div className="h-40 animate-pulse rounded-2xl bg-muted" />;
   }
 
-  if (gate !== "ready" || !job) {
+  if (gate === "missing" || !job) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
         <Radar className="mx-auto size-8 text-muted-foreground" />
-        <p className="mt-3 text-sm text-muted-foreground">
-          {gate === "missing"
-            ? "This role is not in the latest scan."
-            : "This role shows up after you click Scan now."}
+        <p className="text-sm text-muted-foreground">
+          This role is not in this browser&apos;s inbox. Scan again, or paste the job link to open it.
         </p>
-        <Link href="/" className="mt-4 inline-block text-sm font-medium text-primary">
+        <div className="mx-auto w-full max-w-xl text-left">
+          <JobUrlForm />
+        </div>
+        <Link href="/" className="text-sm font-medium text-primary">
           Back to inbox
         </Link>
       </div>
     );
   }
 
-  return <JobWorkspace job={job} />;
+  return <JobWorkspace job={job} reading={reading} readError={readError} />;
 }

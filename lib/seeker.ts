@@ -1,5 +1,7 @@
 import { isLocationId, locationLabel } from "@/lib/locations";
-import type { Profile } from "@/lib/profile";
+import { savedResumeText, type Profile } from "@/lib/profile";
+import { gradYear, hookLabels, resumeHooks } from "@/lib/resume-hooks";
+import { extractSkills } from "@/lib/skills";
 
 export const SEEKER_STORAGE_KEY = "warm-apply-seeker";
 
@@ -56,13 +58,13 @@ export function profileForSeeker(base: Profile, prefs: SeekerPrefs): Profile {
     if (seeker.locationId === "nyc") return base;
     return { ...base, location };
   }
-  const name = seeker.name.trim() || "Candidate";
+  const name = seeker.name.trim() || base.name;
   const resume = seeker.resumeText.trim();
   return {
     name,
     summary: resume || `${name} is targeting roles in ${location}.`,
-    school: "",
-    fraternity: "",
+    school: seeker.name.trim() ? "" : base.school,
+    fraternity: seeker.name.trim() ? "" : base.fraternity,
     location,
     targetRoles: base.targetRoles,
     proofPoints: [],
@@ -70,13 +72,43 @@ export function profileForSeeker(base: Profile, prefs: SeekerPrefs): Profile {
   };
 }
 
-export function tailorCacheKey(jobId: string, resumeText: string): string {
-  const text = resumeText.trim();
-  if (!text) return jobId;
+/** Uploaded resume, or the saved one until a PDF is uploaded. */
+export function effectiveResume(prefs: Pick<SeekerPrefs, "resumeText">): string {
+  return prefs.resumeText.trim() || savedResumeText();
+}
+
+export function textHash(text: string): string {
   let hash = 0;
-  const sample = text.slice(0, 4000);
+  const sample = text.trim();
   for (let i = 0; i < sample.length; i += 1) {
     hash = (hash * 31 + sample.charCodeAt(i)) >>> 0;
   }
-  return `${jobId}:${hash.toString(16)}`;
+  return hash.toString(16);
+}
+
+export function tailorCacheKey(jobId: string, resumeText: string): string {
+  const text = resumeText.trim();
+  if (!text) return jobId;
+  return `${jobId}:${textHash(text.slice(0, 4000))}`;
+}
+
+export type ResumeSnapshot = {
+  source: "upload" | "saved";
+  fileName: string;
+  gradYear: number | null;
+  skills: string[];
+  hooks: string[];
+};
+
+/** What the scorer will read — shown on the home page so a bad PDF parse is obvious. */
+export function resumeSnapshot(prefs: SeekerPrefs): ResumeSnapshot {
+  const text = effectiveResume(prefs);
+  const uploaded = Boolean(prefs.resumeText.trim());
+  return {
+    source: uploaded ? "upload" : "saved",
+    fileName: uploaded ? prefs.resumeFileName || "Uploaded PDF" : "Saved resume",
+    gradYear: gradYear(text),
+    skills: extractSkills(text),
+    hooks: hookLabels(resumeHooks(text)),
+  };
 }

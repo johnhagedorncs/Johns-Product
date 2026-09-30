@@ -1,19 +1,6 @@
-let revealed = false;
 let pendingScan = false;
 
-export function markInboxRevealed(): void {
-  revealed = true;
-}
-
-export function isInboxRevealed(): boolean {
-  return revealed;
-}
-
-export function resetInboxReveal(): void {
-  revealed = false;
-  pendingScan = false;
-}
-
+/** Ask the inbox to scan — works whether or not the inbox is mounted yet. */
 export function requestInboxScan(): void {
   pendingScan = true;
   if (typeof window !== "undefined") {

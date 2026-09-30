@@ -5,6 +5,7 @@ import { Inbox } from "lucide-react";
 import {
   formatStatusLabel,
   getSeedTrackerRows,
+  isFollowUpDue,
   mergeTrackerRows,
   parseTrackerOverrides,
   TRACKER_STORAGE_KEY,
@@ -44,6 +45,8 @@ export function KanbanBoard() {
   function move(id: string, status: TrackerStatus) {
     persist(rows.map((row) => (row.id === id ? { ...row, status } : row)));
   }
+
+  const today = new Date().toISOString().slice(0, 10);
 
   if (rows.length === 0) {
     return (
@@ -86,7 +89,15 @@ export function KanbanBoard() {
                   }
                   className="cursor-grab rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  <p className="font-medium">{card.person}</p>
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-medium">{card.person}</p>
+                    {(card.status === "messaged" || card.status === "queued") &&
+                    isFollowUpDue(card.nextFollowup, today) ? (
+                      <span className="rounded-full bg-warning/15 px-2 py-0.5 text-xs font-medium text-warning">
+                        Follow up
+                      </span>
+                    ) : null}
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     {card.company} · {card.role}
                   </p>

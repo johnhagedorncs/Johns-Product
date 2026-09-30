@@ -1,31 +1,4 @@
-import outreachSeed from "@/data/outreach.json";
-import { findCachedJob, recallScan } from "@/lib/scan-cache";
-import type { Job, OutreachContact } from "@/lib/types";
-
-const outreach = outreachSeed as OutreachContact[];
-
-export function getJobs(): Job[] {
-  return recallScan() ?? [];
-}
-
-export function getJobById(id: string): Job | undefined {
-  return findCachedJob(id);
-}
-
-export function getJobByUrl(url: string): Job | undefined {
-  const normalized = url.trim().toLowerCase();
-  return getJobs().find(
-    (job) =>
-      job.jobUrl.toLowerCase() === normalized ||
-      normalized.includes(job.id.replace(/-/g, ""))
-  );
-}
-
-export function getOutreachForJob(jobId: string): OutreachContact[] {
-  return outreach
-    .filter((c) => c.jobId === jobId)
-    .sort((a, b) => b.rankScore - a.rankScore);
-}
+import type { Job, JobSource } from "@/lib/types";
 
 export function hoursSincePosted(postedAt: string, now = Date.now()): number {
   const ms = now - new Date(postedAt).getTime();
@@ -48,7 +21,20 @@ export function shouldApplyToday(fitScore?: number): boolean {
   return fitScore !== undefined && fitScore >= 3;
 }
 
+/** Fresh, good-fit, and nothing blocking — the roles to apply to before lunch. */
+export function isApplyToday(job: Job, now = Date.now()): boolean {
+  return (
+    shouldApplyToday(job.fitScore) &&
+    job.fit?.action !== "skip" &&
+    isFreshPosting(job.postedAt, now)
+  );
+}
+
 export type JobSort = "match" | "posted";
+
+function postedDesc(a: Job, b: Job): number {
+  return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
+}
 
 export function sortJobs(jobs: Job[], sort: JobSort): Job[] {
   const copy = [...jobs];
@@ -57,16 +43,48 @@ export function sortJobs(jobs: Job[], sort: JobSort): Job[] {
       const scoreA = a.fitScore ?? -1;
       const scoreB = b.fitScore ?? -1;
       if (scoreB !== scoreA) return scoreB - scoreA;
+      if (Boolean(a.early) !== Boolean(b.early)) return a.early ? -1 : 1;
+      if (Boolean(a.onWatchList) !== Boolean(b.onWatchList)) return a.onWatchList ? -1 : 1;
     }
-    return new Date(b.postedAt).getTime() - new Date(a.postedAt).getTime();
+    return postedDesc(a, b);
   });
   return copy;
 }
 
-export function groupJobsByTier(jobList: Job[]): Record<string, Job[]> {
-  const groups: Record<string, Job[]> = { A: [], B: [], C: [] };
-  for (const job of jobList) {
-    groups[job.tier]?.push(job);
-  }
-  return groups;
+export type SourceFilter = "all" | "watchlist" | "simplify" | "linkedin";
+
+export type JobFilters = {
+  minFit: number;
+  source: SourceFilter;
+  query: string;
+  hidden: Set<string>;
+};
+
+function fromSource(job: Job, source: SourceFilter): boolean {
+  if (source === "all") return true;
+  const sources: JobSource[] = job.sources ?? (job.source ? [job.source] : []);
+  if (source === "watchlist") return Boolean(job.onWatchList);
+  return sources.includes(source);
 }
+
+export function filterJobs(jobs: Job[], filters: JobFilters): Job[] {
+  const query = filters.query.trim().toLowerCase();
+  return jobs.filter((job) => {
+    if (filters.hidden.has(job.id)) return false;
+    if (filters.minFit > 0 && (job.fitScore ?? 0) < filters.minFit) return false;
+    if (!fromSource(job, filters.source)) return false;
+    if (query && !`${job.company} ${job.title} ${job.location}`.toLowerCase().includes(query)) {
+      return false;
+    }
+    return true;
+  });
+}
+
+export const SOURCE_NAMES: Record<JobSource, string> = {
+  greenhouse: "Greenhouse",
+  ashby: "Ashby",
+  lever: "Lever",
+  simplify: "Simplify",
+  linkedin: "LinkedIn",
+  url: "Pasted link",
+};

@@ -19,9 +19,19 @@ function unique(values: string[]): string[] {
   return out;
 }
 
+/** Other ways people write the same hook on LinkedIn. The label comes first. */
+const ALIASES: Record<string, string[]> = {
+  ucsb: ["UCSB", "UC Santa Barbara", "University of California, Santa Barbara"],
+  "zeta beta tau": ["Zeta Beta Tau", "ZBT"],
+};
+
+export function hookAliases(label: string): string[] {
+  return ALIASES[label.trim().toLowerCase()] ?? [label];
+}
+
 function schoolLabels(line: string): string[] {
   if (/ucsb|uc santa barbara|university of california,?\s*santa barbara/i.test(line)) {
-    return ["UCSB", "UC Santa Barbara"];
+    return ["UCSB"];
   }
   const named = line.match(
     /\b([A-Z][\p{L}.'&-]+(?:\s+[A-Z][\p{L}.'&-]+){0,4}\s+(?:University|College))\b/u
@@ -100,8 +110,26 @@ export function hookLabels(hooks: ResumeHooks): string[] {
 export function mentionsResumeHook(text: string, hooks: string[]): boolean {
   if (hooks.length === 0) return false;
   const hay = text.toLowerCase();
-  return hooks.some((hook) => {
-    const needle = hook.trim().toLowerCase();
-    return needle.length >= 3 && hay.includes(needle);
-  });
+  return hooks.some((hook) =>
+    hookAliases(hook).some((alias) => {
+      const needle = alias.trim().toLowerCase();
+      return needle.length >= 3 && hay.includes(needle);
+    })
+  );
+}
+
+const DEGREE_LINE =
+  /\b(b\.?s\.?|m\.?s\.?|b\.?a\.?|m\.?a\.?|m\.?eng|ph\.?d|bachelor|master|degree|expected|graduat|class of)\b/i;
+
+/** Latest graduation year named on a degree line, e.g. 2027 for "M.S. … Expected June 2027". */
+export function gradYear(resumeText: string): number | null {
+  let latest: number | null = null;
+  for (const line of resumeText.split(/\n+/)) {
+    if (!DEGREE_LINE.test(line)) continue;
+    for (const match of line.matchAll(/\b(20\d{2})\b/g)) {
+      const year = Number(match[1]);
+      if (latest === null || year > latest) latest = year;
+    }
+  }
+  return latest;
 }

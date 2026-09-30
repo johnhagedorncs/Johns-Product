@@ -4,8 +4,8 @@ import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
 import { getOpenAIClient, resolveModel } from "@/lib/ai/client";
 import { acceptFoundPeople, type RolePerson } from "@/lib/people";
-import { hookLabels, resumeHooks } from "@/lib/resume-hooks";
-import type { Profile } from "@/lib/profile";
+import { hookAliases, hookLabels, resumeHooks } from "@/lib/resume-hooks";
+import { searchCompanyName } from "@/lib/warm-paths";
 import type { Job } from "@/lib/types";
 
 const FoundPeopleSchema = z.object({
@@ -21,51 +21,42 @@ const FoundPeopleSchema = z.object({
 
 const memory = new Map<string, RolePerson[]>();
 
-function cacheKey(job: Job, hooks: string[]): string {
-  return `${job.company.trim().toLowerCase()}|${job.title.trim().toLowerCase()}|${hooks.join(",").toLowerCase()}`;
-}
+export function peopleSearchPrompt(job: Job, hooks: string[]): string {
+  const company = searchCompanyName(job.company);
+  const queries = hooks
+    .map((hook) => `site:linkedin.com/in "${company}" (${hookAliases(hook).map((a) => `"${a}"`).join(" OR ")})`)
+    .join("\n");
+  return `Find real people who work at ${company} now and share a school, past employer, or group with the candidate.
 
-function prompt(job: Job, profile: Profile, hooks: string[]): string {
-  return `Find real people at this company the candidate can connect with because of something on their resume. Search the public web. Return JSON only.
+Run web searches like these (one per connection), and read the results:
+${queries}
 
-Candidate:
-${profile.name}. ${profile.location}.
-
-Resume connections to match (school is one example; also match shared employers and groups):
-${hooks.join(", ")}
-
-Role:
-${job.company} — ${job.title}
-${job.location}
-${(job.description || "").slice(0, 2500)}
+Connections to match: ${hooks.map((hook) => hookAliases(hook).join(" / ")).join("; ")}
 
 Rules:
-- Up to 5 people who work at ${job.company} now.
-- Each person must share at least one resume connection above. School alumni are the first example. Also include a former coworker or someone in the same group when you can verify it.
-- Do not include someone only because they work at ${job.company}, sit in ${job.location}, or are a recruiter with no shared resume connection.
-- why must name the shared connection using one of: ${hooks.join(", ")}.
-- Every person needs a full first and last name and a real public profile or staff-page URL (https).
-- Skip titles, teams, and anyone whose last name you cannot find.
-- Do not invent names, employers, or URLs. If nobody shares a resume connection, return an empty list.`;
+- Up to 6 people. Each must currently work at ${company} per the search result snippet or profile headline.
+- Each must share at least one connection above — say which in "why" using the connection's name (e.g. "UCSB alum", "ex-BrightAI").
+- "role" is their current title at ${company}.
+- "url" is the linkedin.com/in/... profile URL from the search result, copied exactly.
+- Full first and last name only. Never invent a person, title, or URL. If nobody qualifies, return an empty list.`;
 }
 
 export async function findConnectablePeople(
   job: Job,
-  profile: Profile,
   resumeText: string
 ): Promise<{ hooks: string[]; people: RolePerson[] }> {
   const hooks = hookLabels(resumeHooks(resumeText));
   if (hooks.length === 0) return { hooks, people: [] };
 
-  const key = cacheKey(job, hooks);
+  const key = `${job.company.trim().toLowerCase()}|${hooks.join(",").toLowerCase()}`;
   const cached = memory.get(key);
   if (cached) return { hooks, people: cached };
 
   const openai = getOpenAIClient();
   const response = await openai.responses.parse({
     model: resolveModel("smart"),
-    tools: [{ type: "web_search", search_context_size: "low" }],
-    input: prompt(job, profile, hooks),
+    tools: [{ type: "web_search", search_context_size: "medium" }],
+    input: peopleSearchPrompt(job, hooks),
     text: { format: zodTextFormat(FoundPeopleSchema, "connectable_people") },
   });
   const people = acceptFoundPeople(response.output_parsed?.people ?? [], hooks);

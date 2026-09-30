@@ -9,8 +9,14 @@ export interface Profile {
   targetRoles: string[];
   proofPoints: string[];
   pitch: string;
+  /** Saved resume used until a PDF is uploaded */
+  resumeText?: string;
 }
 
 export function getProfile(): Profile {
   return profileSeed as Profile;
+}
+
+export function savedResumeText(): string {
+  return getProfile().resumeText ?? "";
 }

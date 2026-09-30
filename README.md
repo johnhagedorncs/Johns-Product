@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Warm Apply
 
-## Getting Started
+Find fresh new-grad roles, see how your resume actually matches each posting, and get a ranked warm path into the company — the same day the role goes up.
 
-First, run the development server:
+## What it does
+
+- **Scan** — pulls roles from three places in one click:
+  - your watch list (`data/companies.json`) through the public Greenhouse, Ashby, and Lever job-board APIs;
+  - the [SimplifyJobs New-Grad-Positions](https://github.com/SimplifyJobs/New-Grad-Positions) list on GitHub;
+  - LinkedIn's public (logged-out) job search, past week, entry level.
+  Duplicates across sources are merged; the earliest post date wins.
+- **Fit score** — every role gets an instant check of the posting against your resume: skill overlap, years required, graduation window, clearance / PhD / citizenship, role family, location, early-career signals. With an OpenAI key, the model then reads the top roles against the resume and the check caps its score (hard blockers → 2, not-early-career → 4).
+- **Resume match + tailoring** — matched and missing skills, gaps, and line-by-line rewording for the posting.
+- **Warm paths** — ranked LinkedIn and Google searches for people at the company who share your school, groups, or past employers, plus same-team engineers and recruiters. They open in your own logged-in browser. "Find names with AI" adds web-search results to verify.
+- **Draft + track** — paste a profile, get a ≤300-char note, a short email, and chat questions; mark messaged and the tracker schedules a follow-up in 3 business days.
+
+Nothing is sent for you and nothing logs into LinkedIn. Your resume, inbox, and tracker stay in this browser's localStorage.
+
+## Run it
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`.env` (and the Vercel project's environment variables):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```
+OPENAI_API_KEY=sk-...
+# optional — defaults shown
+AI_MODEL_FAST=gpt-4o-mini
+AI_MODEL_SMART=gpt-4o
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Without a key, scanning, rule scores, and warm-path searches still work.
 
-## Learn More
+## Deploying on Vercel
 
-To learn more about Next.js, take a look at the following resources:
+- Server actions run on the page that calls them; `/` and `/jobs/[id]` set `maxDuration = 60`.
+- Nothing writes to the filesystem, so the read-only Vercel runtime is fine.
+- LinkedIn sometimes rate-limits datacenter IPs. When it does, the scan shows `LinkedIn jobs: 0 ⚠` and the other sources still load.
+- The app has no login. Turn on Vercel **Deployment Protection** so strangers can't spend your OpenAI credits.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tests
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm test        # vitest + coverage floor on lib/
+npm run build
+```

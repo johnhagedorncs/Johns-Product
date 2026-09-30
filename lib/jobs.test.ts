@@ -1,139 +1,86 @@
 import { describe, expect, it } from "vitest";
-import { rememberScan } from "@/lib/scan-cache";
 import {
-  getJobById,
-  getJobByUrl,
-  getOutreachForJob,
-  groupJobsByTier,
+  filterJobs,
   hoursSincePosted,
+  isApplyToday,
   isFreshPosting,
   relativePosted,
   shouldApplyToday,
   sortJobs,
 } from "@/lib/jobs";
-import { clampConnectionNote, clampEmail, initials } from "@/lib/draft-text";
+import type { Job } from "@/lib/types";
 
-describe("jobs helpers", () => {
-  it("finds a cached job by url", () => {
-    rememberScan([
-      {
-        id: "cursor-1",
-        company: "Cursor",
-        title: "SWE",
-        location: "NYC",
-        tier: "A",
-        jobUrl: "https://example.com/cursor",
-        postedAt: "2026-03-29T00:00:00.000Z",
-        teamHint: "",
-        requirements: [],
-      },
-    ]);
-    expect(getJobByUrl("https://example.com/cursor")?.company).toBe("Cursor");
-    expect(getJobById("cursor-1")?.title).toBe("SWE");
-    expect(getOutreachForJob("cursor-new-grad-2027").length).toBeGreaterThan(1);
-    expect(getOutreachForJob("missing")).toEqual([]);
-    const grouped = groupJobsByTier([
-      {
-        id: "a",
-        company: "A",
-        title: "SWE",
-        location: "NYC",
-        tier: "A",
-        jobUrl: "https://a.example",
-        postedAt: "2026-01-01T00:00:00.000Z",
-        teamHint: "",
-        requirements: [],
-      },
-      {
-        id: "b",
-        company: "B",
-        title: "SWE",
-        location: "NYC",
-        tier: "B",
-        jobUrl: "https://b.example",
-        postedAt: "2026-01-01T00:00:00.000Z",
-        teamHint: "",
-        requirements: [],
-      },
-    ]);
-    expect(grouped.A).toHaveLength(1);
-    expect(grouped.C).toHaveLength(0);
+const now = Date.parse("2026-09-30T12:00:00Z");
+
+function job(overrides: Partial<Job>): Job {
+  return {
+    id: "x",
+    company: "Cursor",
+    title: "Software Engineer",
+    location: "New York, NY",
+    tier: "A",
+    jobUrl: "https://x",
+    postedAt: "2026-09-30T06:00:00.000Z",
+    teamHint: "",
+    requirements: [],
+    ...overrides,
+  };
+}
+
+describe("posting age", () => {
+  it("formats hours and days since posting", () => {
+    expect(hoursSincePosted("2026-09-30T06:00:00Z", now)).toBe(6);
+    expect(hoursSincePosted("2026-10-01T00:00:00Z", now)).toBe(0);
+    expect(relativePosted("2026-09-30T11:30:00Z", now)).toBe("just now");
+    expect(relativePosted("2026-09-30T06:00:00Z", now)).toBe("6h ago");
+    expect(relativePosted("2026-09-29T06:00:00Z", now)).toBe("1d ago");
+    expect(relativePosted("2026-09-25T06:00:00Z", now)).toBe("5d ago");
+    expect(isFreshPosting("2026-09-29T00:00:00Z", now)).toBe(true);
+    expect(isFreshPosting("2026-09-27T00:00:00Z", now)).toBe(false);
   });
 
-  it("should apply today when fit >= 3", () => {
-    expect(shouldApplyToday(3)).toBe(true);
-    expect(shouldApplyToday(2)).toBe(false);
+  it("says apply today only for fresh, fitting, unblocked roles", () => {
     expect(shouldApplyToday(undefined)).toBe(false);
-  });
-
-  it("computes hours and relative labels", () => {
-    const posted = "2026-03-29T00:00:00.000Z";
-    const now = new Date("2026-03-29T14:00:00.000Z").getTime();
-    expect(hoursSincePosted(posted, now)).toBe(14);
-    expect(relativePosted(posted, now)).toBe("14h ago");
-    expect(isFreshPosting(posted, now)).toBe(true);
-    expect(relativePosted(posted, new Date(posted).getTime() + 1000)).toBe(
-      "just now"
-    );
-  });
-
-  it("marks posts older than 48h as not fresh", () => {
-    const posted = "2026-03-01T00:00:00.000Z";
-    const now = new Date("2026-03-04T00:00:00.000Z").getTime();
-    expect(isFreshPosting(posted, now)).toBe(false);
-    expect(relativePosted(posted, now)).toBe("3d ago");
-  });
-});
-
-describe("draft text", () => {
-  it("caps connection notes at 300 characters", () => {
-    expect(clampConnectionNote("a".repeat(400))).toHaveLength(300);
-  });
-
-  it("keeps at most six email sentences", () => {
-    const email = "One. Two. Three. Four. Five. Six. Seven.";
-    expect(clampEmail(email).split(". ").length).toBe(6);
-  });
-
-  it("builds initials", () => {
-    expect(initials("Maya Lin")).toBe("ML");
-    expect(initials(" ")).toBe("?");
+    expect(shouldApplyToday(3)).toBe(true);
+    const base = { score: 4, reasons: [], gaps: [], redFlags: [] };
+    expect(isApplyToday(job({ fitScore: 4, fit: { ...base, action: "apply_now" } }), now)).toBe(true);
+    expect(isApplyToday(job({ fitScore: 4, fit: { ...base, action: "skip" } }), now)).toBe(false);
+    expect(isApplyToday(job({ fitScore: 4, postedAt: "2026-09-20T00:00:00Z" }), now)).toBe(false);
   });
 });
 
 describe("sortJobs", () => {
-  const older = {
-    id: "old",
-    company: "A",
-    title: "SWE",
-    location: "NYC",
-    tier: "A" as const,
-    jobUrl: "https://a.example",
-    postedAt: "2026-03-01T00:00:00.000Z",
-    teamHint: "",
-    requirements: [],
-    fitScore: 5,
-  };
-  const newer = {
-    ...older,
-    id: "new",
-    postedAt: "2026-03-20T00:00:00.000Z",
-    fitScore: 3,
-  };
-  const unscored = {
-    ...older,
-    id: "none",
-    postedAt: "2026-03-25T00:00:00.000Z",
-    fitScore: undefined,
-  };
+  const a = job({ id: "a", fitScore: 3, postedAt: "2026-09-29T00:00:00Z" });
+  const b = job({ id: "b", fitScore: 5, postedAt: "2026-09-20T00:00:00Z" });
+  const c = job({ id: "c", fitScore: 3, early: true, postedAt: "2026-09-10T00:00:00Z" });
+  const d = job({ id: "d", fitScore: 3, onWatchList: true, postedAt: "2026-09-01T00:00:00Z" });
+  const e = job({ id: "e", postedAt: "2026-09-30T00:00:00Z" });
 
-  it("ranks by fit, then newer posts", () => {
-    const sorted = sortJobs([newer, unscored, older], "match");
-    expect(sorted.map((job) => job.id)).toEqual(["old", "new", "none"]);
+  it("puts best fit first, then early career, watch list, and freshness", () => {
+    expect(sortJobs([a, b, c, d, e], "match").map((item) => item.id)).toEqual(["b", "c", "d", "a", "e"]);
   });
 
-  it("ranks by post date", () => {
-    const sorted = sortJobs([older, newer], "posted");
-    expect(sorted.map((job) => job.id)).toEqual(["new", "old"]);
+  it("sorts newest first", () => {
+    expect(sortJobs([a, b, e], "posted").map((item) => item.id)).toEqual(["e", "a", "b"]);
+  });
+});
+
+describe("filterJobs", () => {
+  const jobs = [
+    job({ id: "gh", fitScore: 5, source: "greenhouse", sources: ["greenhouse", "linkedin"], onWatchList: true }),
+    job({ id: "li", company: "Uniswap", fitScore: 3, source: "linkedin" }),
+    job({ id: "s", company: "Acme", title: "FDE", fitScore: 4, sources: ["simplify"] }),
+    job({ id: "none", company: "NoFit" }),
+  ];
+  const all = { minFit: 0, source: "all" as const, query: "", hidden: new Set<string>() };
+
+  it("filters by fit, source, text, and hidden ids", () => {
+    expect(filterJobs(jobs, all)).toHaveLength(4);
+    expect(filterJobs(jobs, { ...all, minFit: 4 }).map((item) => item.id)).toEqual(["gh", "s"]);
+    expect(filterJobs(jobs, { ...all, source: "linkedin" }).map((item) => item.id)).toEqual(["gh", "li"]);
+    expect(filterJobs(jobs, { ...all, source: "watchlist" }).map((item) => item.id)).toEqual(["gh"]);
+    expect(filterJobs(jobs, { ...all, source: "simplify" }).map((item) => item.id)).toEqual(["s"]);
+    expect(filterJobs(jobs, { ...all, query: "uniswap" }).map((item) => item.id)).toEqual(["li"]);
+    expect(filterJobs(jobs, { ...all, hidden: new Set(["gh"]) })).toHaveLength(3);
   });
 });

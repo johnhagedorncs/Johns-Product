@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  addBusinessDays,
   formatStatusLabel,
   getSeedTrackerRows,
   isFollowUpDue,
@@ -24,8 +25,13 @@ const seed: TrackerRow[] = [
 ];
 
 describe("tracker", () => {
-  it("loads seed tracker rows", () => {
-    expect(getSeedTrackerRows().length).toBeGreaterThan(0);
+  it("starts with no seeded outreach", () => {
+    expect(getSeedTrackerRows()).toEqual([]);
+  });
+
+  it("schedules follow-ups in business days", () => {
+    expect(addBusinessDays(new Date("2026-09-30T12:00:00"), 3)).toBe("2026-10-05");
+    expect(addBusinessDays(new Date("2026-10-02T12:00:00"), 1)).toBe("2026-10-05");
   });
 
   it("merges new override row when person and company set", () => {

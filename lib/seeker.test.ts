@@ -5,8 +5,11 @@ import {
   defaultSeekerPrefs,
   normalizeSeeker,
   parseSeekerPrefs,
+  effectiveResume,
   profileForSeeker,
+  resumeSnapshot,
   tailorCacheKey,
+  textHash,
 } from "@/lib/seeker";
 
 describe("seeker prefs", () => {
@@ -49,7 +52,8 @@ describe("seeker prefs", () => {
       ...defaultSeekerPrefs(),
       resumeText: "Built compilers and taught interns.",
     });
-    expect(uploaded.name).toBe("Candidate");
+    expect(uploaded.name).toBe("John");
+    expect(uploaded.school).toBe("UC Santa Barbara");
     expect(uploaded.summary).toContain("compilers");
   });
 
@@ -70,5 +74,21 @@ describe("seeker prefs", () => {
     expect(tailorCacheKey("job-1", "other")).not.toBe(
       tailorCacheKey("job-1", "same resume")
     );
+  });
+
+  it("scores against the saved resume until a PDF is uploaded", () => {
+    expect(effectiveResume(defaultSeekerPrefs())).toContain("BrightAI");
+    expect(effectiveResume({ ...defaultSeekerPrefs(), resumeText: "Uploaded text" })).toBe("Uploaded text");
+    expect(textHash("a")).toBe(textHash(" a "));
+    expect(textHash("a")).not.toBe(textHash("b"));
+  });
+
+  it("summarizes what the scorer will read", () => {
+    const saved = resumeSnapshot(defaultSeekerPrefs());
+    expect(saved).toMatchObject({ source: "saved", fileName: "Saved resume", gradYear: 2027 });
+    expect(saved.skills).toEqual(expect.arrayContaining(["Python", "Kubernetes", "PyTorch"]));
+    expect(saved.hooks).toContain("UCSB");
+    const uploaded = resumeSnapshot({ ...defaultSeekerPrefs(), resumeText: "Rust only", resumeFileName: "" });
+    expect(uploaded).toMatchObject({ source: "upload", fileName: "Uploaded PDF", gradYear: null, skills: ["Rust"], hooks: [] });
   });
 });

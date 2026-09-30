@@ -25,21 +25,10 @@ describe("outreach drafts", () => {
         teamHint: "",
         requirements: [],
       },
-      {
-        name: "John",
-        summary: "s",
-        school: "UCSB",
-        fraternity: "ZBT",
-        location: "NYC",
-        targetRoles: [],
-        proofPoints: [],
-        pitch: "p",
-      },
       "Resume body"
     );
     expect(result.missingKeywords).toEqual(["Kubernetes"]);
-    const { readResumeText } = await import("@/lib/ai/tailor-resume");
-    expect(await readResumeText()).toMatch(/BrightAI/);
+    expect(parseStructuredResponse.mock.calls[0][0].input).toContain("Resume body");
     expect(parseStructuredResponse).toHaveBeenCalledWith(
       expect.objectContaining({ modelTier: "smart" })
     );
@@ -48,10 +37,10 @@ describe("outreach drafts", () => {
   it("clamps linkedin drafts", async () => {
     parseStructuredResponse.mockResolvedValueOnce({
       personName: "Maya Lin",
+      linkedinUrl: "",
+      sharedHook: "UCSB",
       rankReason: "UCSB",
-      connectionNote: "x".repeat(400),
-      email: "One. Two. Three. Four. Five. Six. Seven.",
-      coffeeQuestions: ["q1", "q2", "q3", "q4", "q5"],
+      connectionNote: "x".repeat(5000),
     });
     const { draftFromLinkedInPaste } = await import("@/lib/ai/linkedin-draft");
     const draft = await draftFromLinkedInPaste(
@@ -76,9 +65,13 @@ describe("outreach drafts", () => {
         proofPoints: [],
         pitch: "p",
       },
+      "UCSB B.S. Computer Engineering",
       "Headline: SWE"
     );
-    expect(draft.connectionNote).toHaveLength(300);
-    expect(draft.coffeeQuestions).toHaveLength(5);
+    expect(parseStructuredResponse.mock.calls.at(-1)?.[0].input).toContain("UCSB B.S. Computer Engineering");
+    expect(draft.connectionNote).toHaveLength(4000);
+    expect(parseStructuredResponse.mock.calls.at(-1)?.[0].input).toContain(
+      "I hope your week is going well"
+    );
   });
 });

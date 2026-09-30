@@ -1,5 +1,7 @@
 export type JobTier = "A" | "B" | "C";
 
+export type JobSource = "greenhouse" | "ashby" | "lever" | "simplify" | "linkedin" | "url";
+
 export type TrackerStatus =
   | "queued"
   | "messaged"
@@ -10,12 +12,25 @@ export type TrackerStatus =
 
 export type FitAction = "apply_now" | "apply_and_outreach" | "skip";
 
+export type FitCheckLevel = "good" | "warn" | "block";
+
+export interface FitCheck {
+  label: string;
+  level: FitCheckLevel;
+  detail: string;
+}
+
 export interface JobFitResult {
   score: number;
   reasons: string[];
   gaps: string[];
   redFlags: string[];
   action: FitAction;
+  /** "rules" = instant keyword/requirement check, "ai" = model read the resume and posting */
+  basis?: "rules" | "ai";
+  matchedSkills?: string[];
+  missingSkills?: string[];
+  checks?: FitCheck[];
 }
 
 export interface Job {
@@ -30,7 +45,13 @@ export interface Job {
   requirements: string[];
   description?: string;
   early?: boolean;
-  /** Set from seed, AI fit store, or merge — omitted until scored */
+  source?: JobSource;
+  /** Every board this role showed up on after de-duplication */
+  sources?: JobSource[];
+  onWatchList?: boolean;
+  /** LinkedIn's applicant count text, e.g. "Over 200 applicants" */
+  applicants?: string;
+  /** Set from the fit check — omitted until scored */
   fitScore?: number;
   fit?: JobFitResult;
 }

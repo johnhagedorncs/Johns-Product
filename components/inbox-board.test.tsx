@@ -1,60 +1,81 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { InboxBoard } from "@/components/inbox-board";
-import { writeInboxCache } from "@/lib/inbox-client-cache";
-import {
-  markInboxRevealed,
-  resetInboxReveal,
-} from "@/lib/inbox-session";
+import { writeInbox } from "@/lib/inbox-store";
 import type { Job } from "@/lib/types";
 
 vi.mock("server-only", () => ({}));
-vi.mock("@/app/actions/board-scan", () => ({
-  runBoardScan: vi.fn(),
+vi.mock("next/navigation", () => ({ useRouter: () => ({ push: vi.fn() }) }));
+vi.mock("@/app/actions/jobs", () => ({
+  scanJobs: vi.fn(),
+  enrichJobs: vi.fn(async () => ({ jobs: [], aiAvailable: true })),
+  importJobUrl: vi.fn(),
 }));
-vi.mock("@/app/actions/resume", () => ({
-  extractResumePdf: vi.fn(),
-}));
+vi.mock("@/app/actions/resume", () => ({ extractResumePdf: vi.fn() }));
+
+const fit = { score: 5, reasons: [], gaps: [], redFlags: [], action: "apply_now" as const, basis: "ai" as const };
 
 const job: Job = {
   id: "j1",
   company: "Cursor",
-  title: "New Grad Software Engineer",
+  title: "Software Engineer, New Grad 2027",
   location: "New York, NY",
   tier: "A",
   jobUrl: "https://example.com",
-  postedAt: "2026-03-29T00:00:00.000Z",
+  postedAt: new Date().toISOString(),
   teamHint: "",
   requirements: [],
-  fitScore: 4,
+  fitScore: 5,
+  fit,
+  sources: ["ashby", "linkedin"],
+  onWatchList: true,
 };
 
-describe("inbox before scan", () => {
+describe("inbox", () => {
   afterEach(() => {
-    resetInboxReveal();
-    sessionStorage.clear();
+    cleanup();
     localStorage.clear();
   });
 
-  it("does not show cached roles until Scan now", () => {
-    writeInboxCache([job], "Scored 1 new role.");
+  it("asks for a first scan and shows what resume it will score against", () => {
     render(<InboxBoard />);
-    expect(screen.getByText(/Scan now/)).toBeInTheDocument();
-    expect(screen.queryByText(job.title)).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Location")).toBeInTheDocument();
-    expect(screen.getByLabelText("Resume PDF")).toBeInTheDocument();
+    expect(screen.getByText(/to pull New York roles/)).toBeInTheDocument();
+    expect(screen.getByText("Saved resume")).toBeInTheDocument();
+    expect(screen.getByText(/Class of 2027/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Job link")).toBeInTheDocument();
   });
 
-  it("restores the list after a scan in this session without scanning again", async () => {
-    const { runBoardScan } = await import("@/app/actions/board-scan");
-    writeInboxCache([job], "Scored 1 new role.");
-    markInboxRevealed();
+  it("keeps the last scan after a refresh and filters by fit", () => {
+    writeInbox({
+      jobs: [job, { ...job, id: "j2", title: "Data Engineer", fitScore: 2, fit: { ...fit, score: 2 } }],
+      sources: [{ id: "linkedin", label: "LinkedIn jobs", count: 2 }],
+      scannedAt: new Date().toISOString(),
+      locationId: "nyc",
+      newIds: ["j1"],
+    });
     render(<InboxBoard />);
+    expect(screen.getByText(job.title)).toBeInTheDocument();
+    expect(screen.getByText("New")).toBeInTheDocument();
+    expect(screen.getByText("Apply today")).toBeInTheDocument();
+    expect(screen.queryByText("Data Engineer")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "All fits" }));
+    expect(screen.getByText("Data Engineer")).toBeInTheDocument();
+  });
+
+  it("runs a scan and shows every source's count", async () => {
+    const { scanJobs } = await import("@/app/actions/jobs");
+    vi.mocked(scanJobs).mockResolvedValue({
+      jobs: [job],
+      sources: [
+        { id: "watchlist", label: "Watch list (Greenhouse · Ashby · Lever)", count: 1 },
+        { id: "linkedin", label: "LinkedIn jobs", count: 0, error: "LinkedIn did not answer (rate limited)" },
+      ],
+      scannedAt: new Date().toISOString(),
+    });
+    const { requestInboxScan } = await import("@/lib/inbox-session");
+    render(<InboxBoard />);
+    requestInboxScan();
     expect(await screen.findByText(job.title)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Job match" })).toHaveAttribute(
-      "aria-pressed",
-      "true"
-    );
-    expect(runBoardScan).not.toHaveBeenCalled();
+    expect(screen.getByText(/LinkedIn jobs:/)).toHaveAttribute("title", "LinkedIn did not answer (rate limited)");
   });
 });

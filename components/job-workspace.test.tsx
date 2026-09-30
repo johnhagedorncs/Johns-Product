@@ -1,80 +1,53 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { cleanup, render, screen } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { JobWorkspace } from "@/components/job-workspace";
-import { SEEKER_STORAGE_KEY } from "@/lib/seeker";
-import { TRACKER_STORAGE_KEY } from "@/lib/tracker";
+import { ruleFit } from "@/lib/fit";
+import { savedResumeText } from "@/lib/profile";
 import type { Job } from "@/lib/types";
 
 vi.mock("server-only", () => ({}));
 vi.mock("@/app/actions/ai", () => ({
-  tailorResumeForJob: vi.fn(),
   draftLinkedInForJob: vi.fn(),
-  findPeopleForJob: vi.fn(async () => ({
-    hooks: ["UCSB", "Handshake"],
-    people: [
-      {
-        name: "Ada Lovelace",
-        detail: "Engineer · UCSB alum",
-        url: "https://company.example/ada",
-      },
-    ],
-  })),
+  findPeopleForJob: vi.fn(),
+  tailorResumeForJob: vi.fn(),
+  visibleWarmPaths: vi.fn(async (paths: unknown) => paths),
 }));
 
-const job: Job = {
-  id: "live-1",
-  company: "Sierra",
-  title: "Software Engineer",
-  location: "New York, NY",
+const base: Job = {
+  id: "anthropic-1",
+  company: "Anthropic",
+  title: "Applied AI Engineer, New Grad",
+  location: "New York City, NY",
   tier: "A",
-  jobUrl: "https://example.com/sierra",
-  postedAt: "2026-03-29T00:00:00.000Z",
-  teamHint: "",
+  jobUrl: "https://job-boards.greenhouse.io/anthropic/jobs/1",
+  postedAt: "2026-09-29T00:00:00.000Z",
+  teamHint: "Applied AI",
   requirements: [],
+  description: "Build with Python, Kubernetes, and LLM evals. Rust a must. Graduating in 2027.",
+  sources: ["greenhouse"],
+  onWatchList: true,
 };
+const fit = ruleFit(base, { resumeText: savedResumeText(), locationId: "nyc" });
+const job: Job = { ...base, fit, fitScore: fit.score };
 
-describe("job workspace people", () => {
-  it("shows you and people at the company", async () => {
-    localStorage.setItem(
-      SEEKER_STORAGE_KEY,
-      JSON.stringify({
-        name: "Alex",
-        locationId: "sf",
-        resumeText: "Built compilers.",
-        resumeFileName: "alex.pdf",
-      })
-    );
-    localStorage.setItem(
-      TRACKER_STORAGE_KEY,
-      JSON.stringify({
-        "trk-x": {
-          id: "trk-x",
-          date: "2026-03-29",
-          company: "Sierra",
-          role: "SWE",
-          jobUrl: job.jobUrl,
-          person: "Priya Shah",
-          linkedinUrl: "",
-          reason: "Handshake",
-          status: "replied",
-          nextFollowup: "",
-        },
-      })
-    );
+describe("job workspace", () => {
+  afterEach(cleanup);
+
+  it("shows how the resume matches the posting", () => {
     render(<JobWorkspace job={job} />);
-    expect(await screen.findByRole("heading", { name: "Alex" })).toBeInTheDocument();
-    expect(screen.getByText("San Francisco Bay Area")).toBeInTheDocument();
-    expect(screen.getByText("Resume · alex.pdf")).toBeInTheDocument();
-    expect(screen.getByText("People at Sierra")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Priya Shah" })).toBeInTheDocument();
-    expect(
-      await screen.findByRole("heading", { name: "Ada Lovelace" })
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/Paste a LinkedIn profile/i)).not.toBeInTheDocument();
-    expect(screen.getByText("Sharing UCSB, Handshake")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open profile" })).toHaveAttribute(
-      "href",
-      "https://company.example/ada"
-    );
+    expect(screen.getByRole("heading", { name: "Resume match" })).toBeInTheDocument();
+    expect(screen.getByText("Targets your 2027 class")).toBeInTheDocument();
+    expect(screen.getByText("✓ Python")).toBeInTheDocument();
+    expect(screen.getByText("Rust")).toBeInTheDocument();
+    expect(screen.getByText("Quick estimate from keywords")).toBeInTheDocument();
+  });
+
+  it("offers UCSB and team searches at the company even before any names are found", async () => {
+    render(<JobWorkspace job={job} />);
+    expect(await screen.findByText("UCSB alumni at Anthropic")).toBeInTheDocument();
+    expect(screen.getByText("AI engineers at Anthropic")).toBeInTheDocument();
+    const links = screen.getAllByRole("link", { name: /LinkedIn/ });
+    expect(links[0]).toHaveAttribute("href", expect.stringContaining("linkedin.com/search/results/people"));
+    expect(screen.getByRole("button", { name: "Find names with AI" })).toBeInTheDocument();
   });
 });

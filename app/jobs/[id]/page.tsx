@@ -1,5 +1,7 @@
 import { ScannedJob } from "@/components/scanned-job";
 
+export const maxDuration = 60;
+
 type PageProps = { params: Promise<{ id: string }> };
 
 export default async function JobPage({ params }: PageProps) {

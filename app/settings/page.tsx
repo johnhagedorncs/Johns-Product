@@ -6,8 +6,8 @@ export default function SettingsPage() {
       <div>
         <h1 className="text-3xl font-semibold tracking-tight">Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Pick a location and upload a PDF so the next scan scores that person.
-          Leave the name blank to keep the saved profile.
+          Pick a location and upload the PDF you apply with. Every score, warm path, and draft reads
+          this resume. Everything stays in this browser.
         </p>
       </div>
       <SeekerSetup />

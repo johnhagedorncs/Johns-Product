@@ -2,10 +2,10 @@ import { locationMatches } from "@/lib/locations";
 import type { JobTier } from "@/lib/types";
 
 export const FAMILY =
-  /software|engineer|developer|forward deployed|forward-deployed|deployment|solutions|applied ai|machine learning|\bml\b|research engineer|infrastructure|platform|devops|\bsre\b|data engineer|data scientist|technical program|product manager|\bapm\b/i;
+  /software|engineer|developer|forward deployed|forward-deployed|deployment|solutions|applied ai|\bai engineer|machine learning|\bml\b|research engineer|infrastructure|platform|backend|back-end|full[\s-]?stack|devops|\bsre\b|data engineer|data scientist|technical program|product manager|\bapm\b/i;
 
 export const EXCLUDE =
-  /account executive|business development|recruit|counsel|senior|\bsr\.?\b|staff|principal|\blead\b|manager(?!.*\bassociate\b)|director|head of|\bvp\b|architect|\biii\b|\biv\b|\b3\b|phd|intern\b/i;
+  /account executive|business development|recruit|counsel|designer|legal|specialist|attorney|paralegal|marketing|\bsales\b|coordinator|assistant|writer|senior|\bsr\.?\b|staff|principal|\blead\b|manager(?!.*\bassociate\b)|director|head of|\bvp\b|architect|\biii\b|\biv\b|\b3\b|phd|intern\b/i;
 
 export const EARLY =
   /new grad|new graduate|early career|university|entry|2027|\bi\b$|associate/i;

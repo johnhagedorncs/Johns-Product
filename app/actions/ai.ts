@@ -2,65 +2,67 @@
 
 import { hasOpenAIConfig } from "@/lib/ai/client";
 import { findConnectablePeople } from "@/lib/ai/find-people";
-import { draftFromLinkedInPaste } from "@/lib/ai/linkedin-draft";
-import { readResumeText, tailorResume } from "@/lib/ai/tailor-resume";
+import { warmPathsThatHit } from "@/lib/ai/warm-path-check";
+import { draftFromLinkedInPaste, type LinkedInDraft } from "@/lib/ai/linkedin-draft";
+import { tailorResume, type TailorResult } from "@/lib/ai/tailor-resume";
 import { getProfile } from "@/lib/profile";
-import {
-  normalizeSeeker,
-  profileForSeeker,
-  tailorCacheKey,
-  type SeekerPrefs,
-} from "@/lib/seeker";
-import { loadTailors, saveTailor } from "@/lib/tailor-store.server";
-import type { TailorResult } from "@/lib/ai/tailor-resume";
-import type { LinkedInDraft } from "@/lib/ai/linkedin-draft";
+import { effectiveResume, normalizeSeeker, profileForSeeker, type SeekerPrefs } from "@/lib/seeker";
 import type { RolePerson } from "@/lib/people";
+import type { WarmPath } from "@/lib/warm-paths";
 import type { Job } from "@/lib/types";
 
-export async function tailorResumeForJob(
-  job: Job,
-  seekerInput: SeekerPrefs
-): Promise<TailorResult> {
-  const seeker = normalizeSeeker(seekerInput);
-  const key = tailorCacheKey(job.id, seeker.resumeText);
-  const existing = (await loadTailors())[key];
-  if (existing) return existing;
-  const resume = seeker.resumeText.trim() || (await readResumeText());
-  const result = await tailorResume(
-    job,
-    profileForSeeker(getProfile(), seeker),
-    resume
-  );
-  return saveTailor(key, result);
+const NO_KEY = "Add OPENAI_API_KEY to the project's environment variables to use this.";
+
+function failure(err: unknown, fallback: string): string {
+  return (err instanceof Error ? err.message : fallback).slice(0, 240);
+}
+
+export async function visibleWarmPaths(paths: WarmPath[]): Promise<WarmPath[]> {
+  try {
+    return await warmPathsThatHit(paths);
+  } catch {
+    return paths;
+  }
 }
 
 export async function findPeopleForJob(
   job: Job,
   seekerInput: SeekerPrefs
-): Promise<{ hooks: string[]; people: RolePerson[] }> {
-  if (!hasOpenAIConfig()) {
-    throw new Error("Add the model names in .env to look up people.");
+): Promise<{ hooks: string[]; people: RolePerson[]; error?: string }> {
+  if (!hasOpenAIConfig()) return { hooks: [], people: [], error: NO_KEY };
+  try {
+    return await findConnectablePeople(job, effectiveResume(normalizeSeeker(seekerInput)));
+  } catch (err) {
+    return { hooks: [], people: [], error: failure(err, "Could not search for people") };
   }
-  const seeker = normalizeSeeker(seekerInput);
-  const resume = seeker.resumeText.trim() || (await readResumeText());
-  return findConnectablePeople(
-    job,
-    profileForSeeker(getProfile(), seeker),
-    resume
-  );
 }
 
 export async function draftLinkedInForJob(
   job: Job,
   pastedProfile: string,
   seekerInput: SeekerPrefs
-): Promise<LinkedInDraft> {
+): Promise<{ draft?: LinkedInDraft; error?: string }> {
   const text = pastedProfile.trim();
-  if (!text) throw new Error("Paste a LinkedIn profile first.");
-  const seeker = normalizeSeeker(seekerInput);
-  return draftFromLinkedInPaste(
-    job,
-    profileForSeeker(getProfile(), seeker),
-    text
-  );
+  if (!text) return { error: "Paste a LinkedIn profile first." };
+  if (!hasOpenAIConfig()) return { error: NO_KEY };
+  try {
+    const seeker = normalizeSeeker(seekerInput);
+    const profile = profileForSeeker(getProfile(), seeker);
+    return { draft: await draftFromLinkedInPaste(job, profile, effectiveResume(seeker), text) };
+  } catch (err) {
+    return { error: failure(err, "Could not draft outreach") };
+  }
+}
+
+export async function tailorResumeForJob(
+  job: Job,
+  seekerInput: SeekerPrefs
+): Promise<{ tailor?: TailorResult; error?: string }> {
+  if (!hasOpenAIConfig()) return { error: NO_KEY };
+  if (!job.description) return { error: "This posting has no description to tailor against yet." };
+  try {
+    return { tailor: await tailorResume(job, effectiveResume(normalizeSeeker(seekerInput))) };
+  } catch (err) {
+    return { error: failure(err, "Could not tailor the resume") };
+  }
 }

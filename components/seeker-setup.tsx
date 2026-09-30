@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { FileText, Loader2, RotateCcw } from "lucide-react";
 import { extractResumePdf } from "@/app/actions/resume";
+import { Chip } from "@/components/chip";
 import { TARGET_LOCATIONS } from "@/lib/locations";
 import { validatePdfUpload } from "@/lib/pdf-text";
 import {
   defaultSeekerPrefs,
   parseSeekerPrefs,
+  resumeSnapshot,
   SEEKER_STORAGE_KEY,
   type SeekerPrefs,
 } from "@/lib/seeker";
@@ -20,6 +22,7 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
   const [prefs, setPrefs] = useState<SeekerPrefs>(defaultSeekerPrefs);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [showSkills, setShowSkills] = useState(false);
 
   useEffect(() => {
     const next = parseSeekerPrefs(localStorage.getItem(SEEKER_STORAGE_KEY));
@@ -31,17 +34,17 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
 
   function commit(next: SeekerPrefs) {
     setPrefs(next);
-    localStorage.setItem(SEEKER_STORAGE_KEY, JSON.stringify(next));
+    try {
+      localStorage.setItem(SEEKER_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      setError("Could not save — browser storage is full or blocked.");
+    }
     onChange?.(next);
   }
 
   async function onPdf(file: File | undefined) {
     if (!file) return;
-    const invalid = validatePdfUpload({
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    });
+    const invalid = validatePdfUpload({ name: file.name, size: file.size, type: file.type });
     if (invalid) {
       setError(invalid);
       return;
@@ -51,69 +54,106 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
     try {
       const form = new FormData();
       form.set("resume", file);
-      const { text } = await extractResumePdf(form);
-      commit({ ...prefs, resumeText: text, resumeFileName: file.name });
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not read that PDF");
+      const result = await extractResumePdf(form);
+      if (result.error) {
+        setError(result.error);
+        return;
+      }
+      commit({ ...prefs, resumeText: result.text, resumeFileName: file.name });
+    } catch {
+      setError("Could not read that PDF. Try exporting it again as a text PDF.");
     } finally {
       setSaving(false);
     }
   }
 
+  const snapshot = resumeSnapshot(prefs);
+
   return (
-    <form className="grid gap-4 rounded-2xl border border-border bg-card p-6 shadow-sm sm:grid-cols-2">
-      <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium">Your name</span>
-        <input
-          value={prefs.name}
-          onChange={(event) => commit({ ...prefs, name: event.target.value })}
-          placeholder="Leave blank to use the saved profile"
-          className="rounded-2xl border border-border bg-muted/60 px-3 py-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        />
-      </label>
-      <label className="flex flex-col gap-1.5 text-sm">
-        <span className="font-medium">Location</span>
-        <select
-          aria-label="Location"
-          value={prefs.locationId}
-          onChange={(event) =>
-            commit({ ...prefs, locationId: event.target.value })
-          }
-          className="rounded-2xl border border-border bg-muted/60 px-3 py-2 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-        >
-          {TARGET_LOCATIONS.map((location) => (
-            <option key={location.id} value={location.id}>
-              {location.label}
-            </option>
+    <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+        <div className="flex min-w-0 items-start gap-3">
+          <div className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-secondary-foreground">
+            <FileText className="size-5" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              Scoring against
+            </p>
+            <p className="truncate font-semibold">
+              {saving ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Loader2 className="size-4 animate-spin" /> Reading PDF…
+                </span>
+              ) : (
+                snapshot.fileName
+              )}
+            </p>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              {snapshot.gradYear ? `Class of ${snapshot.gradYear}` : "No graduation year found"} ·{" "}
+              <button
+                type="button"
+                onClick={() => setShowSkills((open) => !open)}
+                className="underline-offset-2 hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                {snapshot.skills.length} skills detected
+              </button>
+              {snapshot.hooks.length > 0 ? ` · Warm hooks: ${snapshot.hooks.join(", ")}` : ""}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+          <label className="flex items-center gap-2 text-sm">
+            <span className="sr-only">Location</span>
+            <select
+              aria-label="Location"
+              value={prefs.locationId}
+              onChange={(event) => commit({ ...prefs, locationId: event.target.value })}
+              className="rounded-full border border-border bg-muted/60 px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            >
+              {TARGET_LOCATIONS.map((location) => (
+                <option key={location.id} value={location.id}>
+                  {location.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="cursor-pointer rounded-full border border-border px-3 py-1.5 text-sm font-medium transition-all duration-200 hover:bg-muted focus-within:ring-2 focus-within:ring-ring">
+            Upload PDF
+            <input
+              type="file"
+              accept="application/pdf,.pdf"
+              aria-label="Resume PDF"
+              className="sr-only"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                void onPdf(file);
+                event.target.value = "";
+              }}
+            />
+          </label>
+          {snapshot.source === "upload" ? (
+            <button
+              type="button"
+              onClick={() => commit({ ...prefs, resumeText: "", resumeFileName: "" })}
+              className="inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              aria-label="Use saved resume"
+            >
+              <RotateCcw className="size-3.5" /> Saved
+            </button>
+          ) : null}
+        </div>
+      </div>
+      {showSkills ? (
+        <div className="mt-4 flex flex-wrap gap-1.5">
+          {snapshot.skills.map((skill) => (
+            <Chip key={skill} tone="blue">
+              {skill}
+            </Chip>
           ))}
-        </select>
-      </label>
-      <label className="flex flex-col gap-1.5 text-sm sm:col-span-2">
-        <span className="font-medium">Resume PDF</span>
-        <input
-          type="file"
-          accept="application/pdf,.pdf"
-          aria-label="Resume PDF"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            void onPdf(file);
-            event.target.value = "";
-          }}
-          className="text-sm text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground"
-        />
-        <span className="text-muted-foreground">
-          {saving ? (
-            <span className="inline-flex items-center gap-1">
-              <Loader2 className="size-3.5 animate-spin" /> Reading PDF…
-            </span>
-          ) : prefs.resumeFileName ? (
-            `Using ${prefs.resumeFileName}`
-          ) : (
-            "No PDF yet. Scoring uses the saved resume until you upload one."
-          )}
-        </span>
-        {error ? <span className="text-destructive">{error}</span> : null}
-      </label>
-    </form>
+        </div>
+      ) : null}
+      {error ? <p className="mt-3 text-sm text-destructive">{error}</p> : null}
+    </section>
   );
 }

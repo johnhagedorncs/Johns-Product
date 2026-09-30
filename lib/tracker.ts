@@ -55,3 +55,15 @@ export function formatStatusLabel(status: TrackerStatus): string {
   };
   return labels[status];
 }
+
+/** Date string N business days after `from` (weekends skipped). */
+export function addBusinessDays(from: Date, days: number): string {
+  const date = new Date(from);
+  let added = 0;
+  while (added < days) {
+    date.setDate(date.getDate() + 1);
+    const dow = date.getDay();
+    if (dow !== 0 && dow !== 6) added += 1;
+  }
+  return date.toISOString().slice(0, 10);
+}

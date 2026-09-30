@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getProfile } from "@/lib/profile";
 import type { Job } from "@/lib/types";
 
 const parse = vi.fn();
@@ -44,14 +43,13 @@ describe("findConnectablePeople", () => {
     const { findConnectablePeople } = await import("@/lib/ai/find-people");
     const found = await findConnectablePeople(
       job,
-      getProfile(),
       "UCSB B.S. Computer Engineering"
     );
     expect(found.people.map((person) => person.name)).toEqual(["Ada Lovelace"]);
     expect(found.hooks).toContain("UCSB");
-    expect(parse.mock.calls[0][0].input).toContain("UCSB");
+    expect(parse.mock.calls[0][0].input).toContain('site:linkedin.com/in "Notion" ("UCSB" OR "UC Santa Barbara"');
     expect(parse.mock.calls[0][0].tools[0].type).toBe("web_search");
-    await findConnectablePeople(job, getProfile(), "UCSB B.S. Computer Engineering");
+    await findConnectablePeople(job, "UCSB B.S. Computer Engineering");
     expect(parse).toHaveBeenCalledTimes(1);
   });
 
@@ -70,8 +68,7 @@ describe("findConnectablePeople", () => {
     });
     const { findConnectablePeople } = await import("@/lib/ai/find-people");
     const found = await findConnectablePeople(
-      { ...job, title: "Applied AI Engineer" },
-      getProfile(),
+      { ...job, company: "Figma" },
       "UCSB B.S. Computer Engineering"
     );
     expect(found.people).toEqual([]);
@@ -79,7 +76,7 @@ describe("findConnectablePeople", () => {
 
   it("returns nobody when the resume has no connections", async () => {
     const { findConnectablePeople } = await import("@/lib/ai/find-people");
-    const found = await findConnectablePeople(job, getProfile(), "Built APIs.");
+    const found = await findConnectablePeople(job, "Built APIs.");
     expect(found).toEqual({ hooks: [], people: [] });
     expect(parse).not.toHaveBeenCalled();
   });
@@ -88,8 +85,7 @@ describe("findConnectablePeople", () => {
     parse.mockResolvedValue({ output_parsed: null });
     const { findConnectablePeople } = await import("@/lib/ai/find-people");
     const found = await findConnectablePeople(
-      { ...job, title: "Forward Deployed Engineer" },
-      getProfile(),
+      { ...job, company: "Ramp" },
       "UCSB B.S. Computer Engineering"
     );
     expect(found.people).toEqual([]);
