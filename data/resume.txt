@@ -1,0 +1,22 @@
+John Hagedorn
+UCSB B.S. Computer Engineering, Business minor (June 2026)
+M.S. Technology Management (June 2027)
+New York, NY
+Zeta Beta Tau, Gamma Xi
+
+Engineer who builds AI systems and understands the business side. Targeting new-grad software, forward-deployed, applied AI, and solutions engineering roles in NYC.
+
+BrightAI — AI Engineering Intern
+Built PyTorch anomaly detection for industrial signals. Shipped inference on Kubernetes with Argo and Terraform on EKS. Reduced model error 34%.
+
+Handshake — Software Engineering Intern
+Built LLM evaluation harnesses that cut human review time about 40%.
+
+UCSB Information Technology — Team Lead
+Led a team of 20+ student interns shipping internal tools.
+
+LinkrAI — Capstone
+Multi-agent system with MCP tooling. Placed 1st of 8 capstones.
+
+tsad-harness
+Open-source time-series anomaly detection evaluation harness.

@@ -1,0 +1,21 @@
+{
+  "name": "John",
+  "summary": "UCSB Computer Engineering + Business minor (June 2026); MS Technology Management (June 2027). Targeting new-grad SWE, forward-deployed, applied AI, and solutions engineering in NYC only.",
+  "school": "UC Santa Barbara",
+  "fraternity": "Zeta Beta Tau (Gamma Xi)",
+  "location": "New York, NY",
+  "targetRoles": [
+    "new-grad software engineer",
+    "forward deployed engineer",
+    "applied AI engineer",
+    "solutions engineer"
+  ],
+  "proofPoints": [
+    "BrightAI AI Eng intern — PyTorch anomaly detection, K8s/Argo/Terraform on EKS, 34% error reduction",
+    "Handshake — LLM eval harnesses, −40% review time",
+    "UCSB IT team lead — 20+ interns",
+    "LinkrAI multi-agent + MCP (1st of 8 capstones)",
+    "tsad-harness"
+  ],
+  "pitch": "Engineer who builds AI systems and understands the business side"
+}

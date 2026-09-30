@@ -1,0 +1,62 @@
+[
+  {
+    "jobId": "cursor-new-grad-2027",
+    "name": "Maya Lin",
+    "linkedinUrl": "https://www.linkedin.com/in/example-maya",
+    "relationship": "ucsb",
+    "roleRelevance": "same_function",
+    "why": "UCSB CE alum on product eng; posted about new grad hiring last month.",
+    "draftMessage": "Hi Maya — I'm John, UCSB CE + business minor (June '26), also doing the MS in Tech Management. I saw Cursor's New Grad 2027 role in NYC and applied today. Would you be open to a 20-min chat about how product eng is structured there? Happy to keep it short. Either way, thanks for considering.",
+    "rankScore": 7
+  },
+  {
+    "jobId": "cursor-new-grad-2027",
+    "name": "Jordan Park",
+    "linkedinUrl": "https://www.linkedin.com/in/example-jordan",
+    "relationship": "zbt",
+    "roleRelevance": "one_level_above",
+    "why": "ZBT (Gamma Xi) connection; senior SWE who moved NYC → eng lead.",
+    "draftMessage": "Hey Jordan — fellow ZBT here (UCSB, Gamma Xi). I'm targeting new-grad SWE in NYC and applied to Cursor's 2027 role today. If you have 15 minutes this week I'd love one concrete question: what separates candidates who get interviews there. No pressure on a referral — just trying to learn before screens.",
+    "rankScore": 7
+  },
+  {
+    "jobId": "cursor-new-grad-2027",
+    "name": "Alex Rivera",
+    "linkedinUrl": "https://www.linkedin.com/in/example-alex",
+    "relationship": "recruiter",
+    "roleRelevance": "recruiter",
+    "why": "University recruiting for eng; listed on company page.",
+    "draftMessage": "Hi Alex — I'm John (UCSB CE, MS Tech Management). I applied to New Grad SWE 2027 (NYC) today via Greenhouse. If helpful I can forward resume + one-line pitch. Thanks for anything you can share on timeline.",
+    "rankScore": 6
+  },
+  {
+    "jobId": "sierra-swe-agent-ng-2027",
+    "name": "Priya Shah",
+    "linkedinUrl": "https://www.linkedin.com/in/example-priya",
+    "relationship": "shared_employer",
+    "roleRelevance": "same_function",
+    "why": "Ex-Handshake; now solutions eng on agent product — overlap with your LLM eval work.",
+    "draftMessage": "Hi Priya — we overlapped at Handshake (I built LLM eval harnesses on the data side). I applied to Sierra's SWE Agent new-grad role in NYC today. Would you be open to a quick chat about how agent eng and customer work split on your team?",
+    "rankScore": 8
+  },
+  {
+    "jobId": "sierra-swe-agent-ng-2027",
+    "name": "Chris Nguyen",
+    "linkedinUrl": "https://www.linkedin.com/in/example-chris",
+    "relationship": "ucsb",
+    "roleRelevance": "same_team",
+    "why": "UCSB alum; title matches agent platform from posting keywords.",
+    "draftMessage": "Hi Chris — UCSB alum here (CE). Applied to SWE Agent New Grad 2027 in NYC today. One specific ask: is the role mostly product surface or core agent runtime? Happy to do 15 min whenever works.",
+    "rankScore": 7
+  },
+  {
+    "jobId": "palantir-fdse-ng",
+    "name": "Sam Okonkwo",
+    "linkedinUrl": "https://www.linkedin.com/in/example-sam",
+    "relationship": "mutuals",
+    "roleRelevance": "same_function",
+    "why": "FDSE in NYC; 12 mutual connections including UCSB network.",
+    "draftMessage": "Hi Sam — I'm John (UCSB CE, interned on AI infra + customer-facing capstones). Applied to FDSE New Grad NYC today. If you're open to 20 min I'd love to hear what good FDSE candidates do differently in first-round screens.",
+    "rankScore": 6
+  }
+]

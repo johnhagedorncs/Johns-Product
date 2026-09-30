@@ -1,0 +1,48 @@
+{
+  "_note": "NYC watch list for John Hagedorn (UCSB CE '26, MS Tech Mgmt '27). Board slugs verified against public APIs on 2026-09-29. Tier 1 = AI-native, hiring FDE/applied-AI/SWE in NYC; Tier 2 = strong eng orgs with NYC offices; Tier 3 = domain fit (health, fintech, consumer). 'manual' = no Greenhouse/Lever/Ashby board found; paste job links by hand.",
+  "companies": [
+    {"name": "Anthropic",            "tier": 1, "ats": "greenhouse", "slug": "anthropic",     "why": "Agents/MCP + LLM eval work maps directly; large NYC applied-AI presence"},
+    {"name": "OpenAI",               "tier": 1, "ats": "ashby",      "slug": "openai",        "why": "Applied AI Engineer roles in NYC; LLM eval background"},
+    {"name": "Ramp",                 "tier": 1, "ats": "ashby",      "slug": "ramp",          "why": "NYC HQ, Applied AI / AI Solutions Engineer roles, hires new grads"},
+    {"name": "Cursor",               "tier": 1, "ats": "ashby",      "slug": "cursor",        "why": "Forward Deployed / Field Engineer in NYC; code-gen eval experience"},
+    {"name": "Sierra",               "tier": 1, "ats": "ashby",      "slug": "sierra",        "why": "Agent deployment roles; LinkrAI multi-agent project"},
+    {"name": "Decagon",              "tier": 1, "ats": "ashby",      "slug": "decagon",       "why": "Agent Deployment Engineer; customer-facing + technical"},
+    {"name": "Scale AI",             "tier": 1, "ats": "greenhouse", "slug": "scaleai",       "why": "Frontier Agents / FDE roles; LLM eval harness work at Handshake"},
+    {"name": "Palantir",             "tier": 1, "ats": "lever",      "slug": "palantir",      "why": "NYC is a major office; Backend SWE + Deployment Strategist (tech + business)"},
+    {"name": "Modal",                "tier": 1, "ats": "ashby",      "slug": "modal",         "why": "NYC HQ; ML infra, containers, FDE-ML; your Docker/K8s/EKS work"},
+    {"name": "Rogo",                 "tier": 1, "ats": "ashby",      "slug": "rogo",          "why": "NYC AI-for-finance startup; forward-deployed and eng roles"},
+    {"name": "Vercel",               "tier": 1, "ats": "greenhouse", "slug": "vercel",        "why": "Next.js/TypeScript stack, FDE role in NYC"},
+    {"name": "Harvey",               "tier": 1, "ats": "ashby",      "slug": "harvey",        "why": "AI-native, NYC office, applied/legal engineering"},
+
+    {"name": "Datadog",              "tier": 2, "ats": "greenhouse", "slug": "datadog",       "why": "NYC HQ, big new-grad program; Prometheus/Grafana + observability fit"},
+    {"name": "MongoDB",              "tier": 2, "ats": "greenhouse", "slug": "mongodb",       "why": "NYC HQ, new-grad SWE program; infra/platform"},
+    {"name": "Stripe",               "tier": 2, "ats": "greenhouse", "slug": "stripe",        "why": "NYC office, backend + FDE roles"},
+    {"name": "Figma",                "tier": 2, "ats": "greenhouse", "slug": "figma",         "why": "NYC office, posts 2027 early-career roles"},
+    {"name": "Notion",               "tier": 2, "ats": "ashby",      "slug": "notion",        "why": "NYC office; FDE + solutions roles fit the TM angle"},
+    {"name": "Plaid",                "tier": 2, "ats": "ashby",      "slug": "plaid",         "why": "NYC office, fintech infra, sales/solutions engineering"},
+    {"name": "Mercury",              "tier": 2, "ats": "greenhouse", "slug": "mercury",       "why": "Heavy NYC hiring; SWE infra/product"},
+    {"name": "Spotify",              "tier": 2, "ats": "lever",      "slug": "spotify",       "why": "NYC eng hub; backend/data roles"},
+    {"name": "Glean",                "tier": 2, "ats": "greenhouse", "slug": "gleanwork",     "why": "Enterprise AI search; FDE roles"},
+    {"name": "Clay",                 "tier": 2, "ats": "ashby",      "slug": "claylabs",      "why": "NYC HQ; GTM engineering = tech + business"},
+
+    {"name": "Oscar Health",         "tier": 3, "ats": "greenhouse", "slug": "oscar",         "why": "NYC health-tech; LinkrAI healthcare story; posts level-I roles"},
+    {"name": "Zocdoc",               "tier": 3, "ats": "greenhouse", "slug": "zocdoc",        "why": "NYC health-tech; scheduling = LinkrAI problem space"},
+    {"name": "Headway",              "tier": 3, "ats": "ashby",      "slug": "headway",       "why": "NYC health-tech"},
+    {"name": "Abridge",              "tier": 3, "ats": "ashby",      "slug": "abridge",       "why": "Healthcare AI, NYC presence"},
+    {"name": "Betterment",           "tier": 3, "ats": "greenhouse", "slug": "betterment",    "why": "NYC fintech, all-NYC eng"},
+    {"name": "Squarespace",          "tier": 3, "ats": "greenhouse", "slug": "squarespace",   "why": "NYC HQ, SWE roles"},
+    {"name": "Peloton",              "tier": 3, "ats": "greenhouse", "slug": "peloton",       "why": "NYC HQ, consumer + devices"},
+    {"name": "Cockroach Labs",       "tier": 3, "ats": "greenhouse", "slug": "cockroachlabs", "why": "NYC HQ, distributed systems, solutions eng"},
+    {"name": "Hudson River Trading", "tier": 3, "ats": "greenhouse", "slug": "wehrtyou",      "why": "Stretch: posts '2027 Grads' roles in NYC; very high bar"},
+
+    {"name": "Bloomberg",            "tier": 2, "ats": "manual", "slug": null, "why": "One of NYC's largest new-grad SWE employers"},
+    {"name": "Google (NYC)",         "tier": 2, "ats": "manual", "slug": null, "why": "Huge NYC eng office"},
+    {"name": "Meta (NYC)",           "tier": 2, "ats": "manual", "slug": null, "why": "Large NYC eng office"},
+    {"name": "Amazon / AWS (NYC)",   "tier": 2, "ats": "manual", "slug": null, "why": "AWS depth on resume"},
+    {"name": "Microsoft (NYC)",      "tier": 2, "ats": "manual", "slug": null, "why": "Already networking toward Microsoft"},
+    {"name": "Adobe (NYC)",          "tier": 2, "ats": "manual", "slug": null, "why": "Contacts identified: Pamela Wong, Henry Mills (UCSB)"},
+    {"name": "Two Sigma",            "tier": 3, "ats": "manual", "slug": null, "why": "NYC quant/eng, new-grad program"},
+    {"name": "Etsy",                 "tier": 3, "ats": "manual", "slug": null, "why": "Brooklyn HQ"},
+    {"name": "Unused board", "tier": 3, "ats": "other", "slug": "other", "why": "Exercises an unknown board type"}
+  ]
+}

@@ -1,0 +1,819 @@
+{
+  "cursor-cb5124f8": {
+    "score": 4,
+    "reasons": [
+      "Strong academic background in Computer Engineering and relevant majors.",
+      "Relevant internship experience specifically in AI and software engineering.",
+      "Target role aligns well with passion for forward-deployed and applied AI engineering."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "sierra-2fb0ed3d": {
+    "score": 4,
+    "reasons": [
+      "Strong background in AI engineering with relevant intern experience",
+      "Target role aligns well with candidate's expertise in applied AI and solutions engineering",
+      "Location preference matches available position in New York, NY"
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "palantir-e669f179": {
+    "score": 4,
+    "reasons": [
+      "Strong background in AI and tech aligns well with Palantir's focus.",
+      "Location matches perfectly with the job in NYC.",
+      "Experience in leading teams and reducing errors highlights capability."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "palantir-472c5e39": {
+    "score": 4,
+    "reasons": [
+      "Candidate has relevant education and training in software engineering and AI.",
+      "Experience in roles directly related to the job description.",
+      "Located in New York, matching job location."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "palantir-773d3fcd": {
+    "score": 5,
+    "reasons": [
+      "Target role aligns perfectly with new-grad software engineer position.",
+      "Experience with Kubernetes and anomaly detection matches job requirements.",
+      "Location in NYC directly matches the job posting."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "palantir-8adc3f9d": {
+    "score": 5,
+    "reasons": [
+      "Location aligns with NYC requirement",
+      "Candidate has relevant internships and projects in AI and software engineering",
+      "Strong combination of technical and business skills matches the role's needs"
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "palantir-9388138d": {
+    "score": 5,
+    "reasons": [
+      "Excellent alignment with target role as a software engineer in NYC.",
+      "Relevant internship experience in AI and software deployment.",
+      "Strong business understanding complements technical skills, fitting Palantir's collaborative culture."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "palantir-a0c57dbe": {
+    "score": 4,
+    "reasons": [
+      "Strong alignment with target role of Forward Deployed Engineer.",
+      "Relevant internship experience in AI and software deployment.",
+      "Local to NYC, matching the job location requirements."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "palantir-2cd7aa94": {
+    "score": 5,
+    "reasons": [
+      "Strong alignment with target role as a Forward Deployed Software Engineer",
+      "Relevant technical experience in AI and software development",
+      "Great location match in New York, NY for the role"
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "palantir-b6ea0976": {
+    "score": 4,
+    "reasons": [
+      "Strong alignment with target role of new-grad software engineer in NYC.",
+      "Relevant experience in AI and deployment technologies that match the job's focus.",
+      "Background in both technical and business aspects, aligning well with collaboration needs."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "rogo-24541ed6": {
+    "score": 2,
+    "reasons": [
+      "Position is for a Security Engineer, not aligned with candidate's target roles",
+      "Candidate lacks specific experience in cloud security architecture and Terraform",
+      "Role requires advanced technical leadership, which the candidate does not yet possess"
+    ],
+    "gaps": [
+      "Experience with AWS and GCP cloud security architecture",
+      "Deep proficiency in Terraform and cloud IAM",
+      "Experience in threat modeling and architectural reviews"
+    ],
+    "redFlags": [],
+    "action": "skip"
+  },
+  "anthropic-7030d62a": {
+    "score": 4,
+    "reasons": [
+      "Strong background in AI and relevant programming experience.",
+      "Target role aligns well with educational background and internship experience.",
+      "Located in NYC, which meets the job's preferred locations."
+    ],
+    "gaps": [
+      "Experience with large-scale machine learning training specifically in reinforcement learning."
+    ],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "anthropic-ecba6ba8": {
+    "score": 4,
+    "reasons": [
+      "Strong applied AI experience with relevant internships.",
+      "Location alignment with NYC, targeting applied AI roles.",
+      "Familiar with modern ML concepts and tools, particularly PyTorch."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "anthropic-ecaa82ab": {
+    "score": 4,
+    "reasons": [
+      "Strong relevant experience in AI engineering and distributed systems",
+      "Target location matches NYC role availability",
+      "Proven track record with projects related to LLMs and reinforcement learning"
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "openai-34a17dab": {
+    "score": 4,
+    "reasons": [
+      "Strong AI experience from internships and capstone projects.",
+      "Targeting roles in NYC aligns well with the job location.",
+      "Business understanding complements technical skills."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "anthropic-b9b266cb": {
+    "score": 3,
+    "reasons": [
+      "Relevant internship experience in AI engineering and applied technologies.",
+      "Strong academic background in computer engineering and business which aligns with the target role.",
+      "Lives in NYC which is a critical location for the position."
+    ],
+    "gaps": [],
+    "redFlags": [
+      "Requires 4+ years of experience, candidate is new-grad with expected graduation in 2026."
+    ],
+    "action": "apply_and_outreach"
+  },
+  "anthropic-19c1ba05": {
+    "score": 2,
+    "reasons": [
+      "No Salesforce development experience or related certifications",
+      "Pivotal skills like Apex and CPQ functionality are missing",
+      "Role location is not aligned with candidate's target (NYC only)"
+    ],
+    "gaps": [
+      "Salesforce development experience (Apex, SOQL, LWC, Flow)",
+      "Experience building/extending CPQ and quote-to-cash functionality",
+      "Integration experience with billing systems and knowledge of SFDX"
+    ],
+    "redFlags": [
+      "Location requirement (San Francisco, CA; Seattle, WA)"
+    ],
+    "action": "skip"
+  },
+  "anthropic-ce842658": {
+    "score": 3,
+    "reasons": [
+      "Strong background in AI and technical skills relevant to deployment roles",
+      "Targeting location aligns with NYC position availability",
+      "Experience in leadership and projects, but lacks 5+ years customer-facing experience"
+    ],
+    "gaps": [
+      "Not enough experience (5+ years required) in customer-facing technical roles, specifically implementation management or solutions consulting"
+    ],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "anthropic-9d21f9db": {
+    "score": 2,
+    "reasons": [
+      "Role is primarily for a Product Designer, not a Software Engineer which is John's target role.",
+      "John's experience is not aligned with designing workflows or user interfaces for developer tools as required.",
+      "Job location is San Francisco with only a partial alignment to NYC."
+    ],
+    "gaps": [
+      "Experience with designing and shipping complex workflows or products is insufficient."
+    ],
+    "redFlags": [
+      "Role is for a Product Designer rather than a software engineering position.",
+      "Job location preference does not fully align with John's location."
+    ],
+    "action": "skip"
+  },
+  "anthropic-ce61e6fc": {
+    "score": 4,
+    "reasons": [
+      "Strong relevant experience in AI and software engineering roles.",
+      "Targeted location in NYC aligns with the job's location requirements.",
+      "Educational background fits well with the role's technology focus."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "harvey-b9e09832": {
+    "score": 1,
+    "reasons": [
+      "Role requires 7+ years of experience, candidate has none.",
+      "Position is for a Broadcast Engineer, while candidate targets software engineering roles.",
+      "Location mismatch as role is specific to broadcast engineering, not AI or software engineering."
+    ],
+    "gaps": [],
+    "redFlags": [
+      "minimum years of experience"
+    ],
+    "action": "skip"
+  },
+  "palantir-525f122e": {
+    "score": 4,
+    "reasons": [
+      "Strong technical background with AI and software engineering skills",
+      "New York location aligns perfectly with job requirements",
+      "Experience in collaborative environments suits Palantir's team-oriented approach"
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "vercel-6a9ce15e": {
+    "score": 3,
+    "reasons": [
+      "Candidate has relevant internship experience in AI engineering.",
+      "Position aligns with the candidate's target roles in applied AI and solutions engineering.",
+      "Location matches the New York City requirement, though the candidate is still a new grad."
+    ],
+    "gaps": [
+      "Candidate lacks the 5+ years of experience required."
+    ],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "vercel-a1a8bf8a": {
+    "score": 2,
+    "reasons": [
+      "Target role is not aligned with software engineering; it's focused on HR tech.",
+      "Lacks required 4+ years experience with Workday integrations.",
+      "Location is partially aligned, but role is not suitable for a new graduate."
+    ],
+    "gaps": [
+      "Experience with Workday integrations (required 4+ years)",
+      "Direct experience with XML/XSLT and Workday Business Process Framework"
+    ],
+    "redFlags": [
+      "Minimum 4 years of experience required for the role"
+    ],
+    "action": "skip"
+  },
+  "vercel-e91f046c": {
+    "score": 3,
+    "reasons": [
+      "Strong background in AI and engineering aligns with the role",
+      "Location in NYC is ideal for the job",
+      "Lacks minimum 6 years of experience required for the position"
+    ],
+    "gaps": [
+      "6+ years of experience in software engineering",
+      "Expert-level TypeScript skills not confirmed",
+      "Deep expertise in Next.js not confirmed"
+    ],
+    "redFlags": [
+      "Minimum years of experience required (6+)"
+    ],
+    "action": "apply_and_outreach"
+  },
+  "vercel-287b8b42": {
+    "score": 3,
+    "reasons": [
+      "New York City location matches requirements",
+      "Strong background in AI which aligns with the role's focus",
+      "Relevant internship experience but lacks public body of work in DevRel"
+    ],
+    "gaps": [
+      "Experience with TypeScript and Next.js is unclear",
+      "Publicly available work (posts, talks, etc.) not mentioned"
+    ],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "vercel-89fd04a8": {
+    "score": 2,
+    "reasons": [
+      "Role is specifically for a Security Engineer, which diverges from software and AI engineering that the candidate targets.",
+      "Candidate lacks extensive experience in security operations and related technologies specified in the job description.",
+      "Location preference is NYC, but the role may require hybrid or alternate arrangements, affecting fit."
+    ],
+    "gaps": [
+      "Extensive experience in security operations, including SIEM management and detection engineering.",
+      "Strong knowledge of AWS infrastructure and cloud security best practices.",
+      "Hands-on experience with incident response and proficiency in scripting languages such as Python or Bash."
+    ],
+    "redFlags": [
+      "Candidate's graduation date in June 2026 and June 2027 does not align with typical experience expectations for the role."
+    ],
+    "action": "skip"
+  },
+  "vercel-37313571": {
+    "score": 3,
+    "reasons": [
+      "Targeting a location that matches the job",
+      "Has relevant internship experience in AI and engineering",
+      "Familiar with modern tools, but lacks proficiency in JavaScript/TypeScript"
+    ],
+    "gaps": [
+      "Proficiency in JavaScript/TypeScript",
+      "5+ years of experience requirement"
+    ],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "vercel-5bb3556d": {
+    "score": 3,
+    "reasons": [
+      "Relevant AI and software engineering experience with focus on applied LLMs.",
+      "Target location aligns with NYC opportunity and role's hybrid nature.",
+      "Background in business complements technical skills."
+    ],
+    "gaps": [],
+    "redFlags": [
+      "5+ years of experience required in trust & safety or security engineering."
+    ],
+    "action": "apply_and_outreach"
+  },
+  "vercel-b14e3341": {
+    "score": 2,
+    "reasons": [
+      "Role requires at least 5 years of experience, candidate is a new grad.",
+      "Location preference is NYC, but this role is hybrid with potential office days in San Francisco.",
+      "Lacks comfort with Golang as specified in job requirements."
+    ],
+    "gaps": [],
+    "redFlags": [
+      "Minimum experience requirement not met (5 years)"
+    ],
+    "action": "skip"
+  },
+  "vercel-9b300ccc": {
+    "score": 4,
+    "reasons": [
+      "Strong alignment with software engineering and applied AI interests.",
+      "Relevant experience in AI and engineering from internship and projects.",
+      "Located in NYC, matching the job's location requirement."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "vercel-a7613fae": {
+    "score": 4,
+    "reasons": [
+      "Strong AI and software engineering internship experience",
+      "Relevant target location in NYC",
+      "Business understanding complements technical skills"
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "vercel-c58431ca": {
+    "score": 2,
+    "reasons": [
+      "Candidate is a new grad, but the role requires 4+ years in security engineering.",
+      "Lacks direct experience with the specific frameworks mentioned (Turborepo, Nuxt, Svelte/SvelteKit, etc.).",
+      "Focus on security engineering does not align with the applicant's target roles in applied AI and software engineering."
+    ],
+    "gaps": [
+      "Experience with specified frameworks (Turborepo, Nuxt, etc.)",
+      "Hands-on security engineering experience",
+      "CVE credits or open source contributions"
+    ],
+    "redFlags": [
+      "Minimum years of experience (4+ years)"
+    ],
+    "action": "skip"
+  },
+  "vercel-752f433c": {
+    "score": 4,
+    "reasons": [
+      "Strong background in software engineering and relevant technologies like Terraform and Kubernetes.",
+      "Targeting new-grad SWE roles aligns well with Vercel's offering.",
+      "Location in NYC matches the job's requirements."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "vercel-d877dcb5": {
+    "score": 3,
+    "reasons": [
+      "Strong educational background in Computer Engineering and Technology Management",
+      "Relevant internship experience with AI and software engineering",
+      "Location aligns with job's hybrid NYC role"
+    ],
+    "gaps": [
+      "Minimally required 4+ years of experience in data engineering",
+      "Lack of strong SQL and Python coding experience mentioned",
+      "No specific hands-on experience with dbt and ELT/ETL workflows"
+    ],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "vercel-4610b234": {
+    "score": 5,
+    "reasons": [
+      "Perfect alignment with candidate's target role as a new-grad software engineer in NYC.",
+      "Relevant experience with AI systems and production-level projects matches Vercel's focus.",
+      "Location is ideal for the hybrid role, ensuring compliance with the job's requirements."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "vercel-a180bee2": {
+    "score": 4,
+    "reasons": [
+      "Strong background in software engineering and AI aligns with solutions engineering role.",
+      "Located in NYC and familiar with target tech stack (Next.js, TypeScript).",
+      "Experience in collaborative and open-source environments matches Vercel's culture."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "vercel-57109eea": {
+    "score": 3,
+    "reasons": [
+      "Strong software engineering background aligns with role requirements.",
+      "Currently in school with relevant AI and engineering experience.",
+      "Location in NYC matches role's requirements."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "vercel-a79ec42a": {
+    "score": 2,
+    "reasons": [
+      "Target role is IT Ops Engineer, which is not aligned with software engineering or applied AI roles.",
+      "Minimum requirement of 5 years IT support experience is not met.",
+      "The role requires extensive troubleshooting skills that are not showcased in the candidate's experience."
+    ],
+    "gaps": [],
+    "redFlags": [
+      "Minimum 5 years of experience required for the role."
+    ],
+    "action": "skip"
+  },
+  "vercel-b0faac0c": {
+    "score": 4,
+    "reasons": [
+      "Strong alignment with software engineering and AI skills",
+      "Located in NYC, matching the job's location requirement",
+      "Relevant internship experience with a focus on modern technologies"
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "ramp-18b4a9ce": {
+    "score": 4,
+    "reasons": [
+      "Strong technical background in Computer Engineering and relevant projects",
+      "Location aligns with NYC, targeting roles Ramp is hiring for",
+      "Experience with AI and software engineering, fitting Ramp's focus on product building"
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "ramp-98d25c83": {
+    "score": 2,
+    "reasons": [
+      "Target role is Machine Learning Engineer, which is slightly outside applied AI focus.",
+      "Requires 5 years of industry experience, candidate is new grad and does not meet this requirement.",
+      "Does not meet the specified educational background, as candidate is still pursuing degrees."
+    ],
+    "gaps": [
+      "5 years of industry experience as a Machine Learning Engineer, Applied Scientist or Data Scientist",
+      "Strong knowledge of SQL (database experience not mentioned)",
+      "Experience deploying ML models to production"
+    ],
+    "redFlags": [
+      "Minimum 5 years of industry experience required",
+      "Graduate date window (candidate still in school)"
+    ],
+    "action": "skip"
+  },
+  "modal-a2c74f8a": {
+    "score": 3,
+    "reasons": [
+      "Strong technical background with experience in AI and relevant tools.",
+      "Located in NYC aligns with job requirements.",
+      "Limited SQL and data pipeline experience compared to job expectations."
+    ],
+    "gaps": [
+      "SQL fluency not explicitly mentioned",
+      "Professional experience with required tools (Snowflake, dbt, etc.) not specified"
+    ],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "sierra-11a471ba": {
+    "score": 4,
+    "reasons": [
+      "Strong background in AI and relevant technologies, especially demonstrated through LinkrAI multi-agent project.",
+      "Target location (NYC) aligns well with the job's opportunity in NYC.",
+      "Relevant coursework and projects show readiness for entry-level software engineering roles."
+    ],
+    "gaps": [
+      "Experience building and deploying systems in a production environment is implied but not explicitly stated.",
+      "Familiarity with React, TypeScript, and/or Go is not mentioned."
+    ],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "sierra-11759a50": {
+    "score": 4,
+    "reasons": [
+      "Strong background in AI and software engineering relevant to the role",
+      "Project experience aligns with Sierra's focus on customer-facing AI agents",
+      "Located in New York, NY, which fits the job's location requirements"
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "sierra-6296d326": {
+    "score": 4,
+    "reasons": [
+      "Strong relevant experience in AI and software engineering from internships and projects.",
+      "Direct alignment with the company's focus on AI agents, especially with LinkrAI experience.",
+      "Located in NYC, which matches the job's location requirements."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "sierra-11959eec": {
+    "score": 4,
+    "reasons": [
+      "Strong relevant experience in AI engineering with tangible results.",
+      "Current education aligns well with a technology-focused role, possessing both technical and business insight.",
+      "Location flexibility includes NYC, aligning with the company's needs."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "sierra-162cbe09": {
+    "score": 4,
+    "reasons": [
+      "Relevant AI experience from internship and projects",
+      "Located in New York, aligning with job requirement",
+      "Exposure to public sector-like projects with LinkrAI"
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "sierra-ed45a824": {
+    "score": 4,
+    "reasons": [
+      "Strong technical skills in Python and AI relevant to building AI agents.",
+      "Experience with multi-agent systems aligns with team focus at Sierra.",
+      "Located in New York, matching job location requirements."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "sierra-c6311258": {
+    "score": 3,
+    "reasons": [
+      "Strong AI and software engineering experience, relevant to healthcare agents.",
+      "Experience in managing projects and leading teams, fitting with the role's ownership aspect.",
+      "Relevant technical skills in Python and cloud technologies align with job requirements."
+    ],
+    "gaps": [],
+    "redFlags": [
+      "Candidate currently is in a graduate program and will not graduate until June 2027, which may not align with immediate hiring needs."
+    ],
+    "action": "apply_and_outreach"
+  },
+  "cursor-92fba5aa": {
+    "score": 3,
+    "reasons": [
+      "Strong technical background in AI and coding aligns with the role's requirements.",
+      "Experience in managing projects and relationships with a focus on technical delivery.",
+      "Recent internships and projects demonstrate relevant skills, though lacking a full 6 years of experience."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "anthropic-9a308521": {
+    "score": 3,
+    "reasons": [
+      "Has strong technical skills in AI and full-stack development relevant to the role.",
+      "Experience in environments similar to the fast-paced setting at Anthropic.",
+      "Location is suitable, but lacks the 8+ years of experience required."
+    ],
+    "gaps": [
+      "Lacks 8+ years of experience building full-stack applications as specified in the job description."
+    ],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "anthropic-6ad53df4": {
+    "score": 3,
+    "reasons": [
+      "Candidate has relevant AI and software engineering experience, particularly in ML and data analysis.",
+      "Skills in reinforcement learning and large language models align with the job requirements.",
+      "The candidate's technical proficiency and collaborative background fit well with the role's focus on partnerships."
+    ],
+    "gaps": [],
+    "redFlags": [
+      "Minimum 7 years of ML experience not met (candidate is early-career)"
+    ],
+    "action": "apply_and_outreach"
+  },
+  "ramp-b78553c0": {
+    "score": 2,
+    "reasons": [
+      "Location mismatch: Candidate is in New York, Ramp prefers either NYC or SF.",
+      "Candidate lacks the 5 years of required experience for this role.",
+      "Focus on front-end and design engineering does not align with candidate's AI and backend strengths."
+    ],
+    "gaps": [],
+    "redFlags": [
+      "Minimum 5 years of experience as a front-end or design engineer required."
+    ],
+    "action": "skip"
+  },
+  "rogo-7bed32c4": {
+    "score": 3,
+    "reasons": [
+      "Strong technical skills in Python and cloud infrastructure are relevant to the role.",
+      "Experience with AI and data pipelines aligns with financial data processing needs.",
+      "Location matches, though the candidate's experience is primarily internship-based."
+    ],
+    "gaps": [
+      "5+ years professional experience required in the job description vs. candidate's current experience"
+    ],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "rogo-3b7d6f9b": {
+    "score": 4,
+    "reasons": [
+      "Strong technical skills in Python, Kubernetes, and cloud platforms match job requirements.",
+      "Internship experiences at technology-focused companies align well with the startup environment of Rogo.",
+      "Demonstrated ability to solve complex problems and lead projects as a former Software Engineer Team Lead."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_now"
+  },
+  "rogo-6c04c6da": {
+    "score": 3,
+    "reasons": [
+      "Strong technical skills relevant to the stack (Python, React, TypeScript)",
+      "Experience with AI and cloud technologies aligns with Rogo's mission",
+      "Limited industry experience (less than 5 years) may be a concern for the role"
+    ],
+    "gaps": [],
+    "redFlags": [
+      "Minimum 5+ years of industry experience"
+    ],
+    "action": "apply_and_outreach"
+  },
+  "rogo-c91ad93e": {
+    "score": 3,
+    "reasons": [
+      "Strong programming skills in Python, Java, and C++, aligning with backend and scalable systems.",
+      "Experience in AI and creating infrastructure for AI applications fits with Rogo's mission.",
+      "Internships provide relevant experience but lack the 4+ years of experience requirement."
+    ],
+    "gaps": [
+      "Does not meet the 4+ years of experience required for building and scaling distributed systems.",
+      "No experience mentioned with gRPC or protocol buffers.",
+      "Location conflict: candidate is based in New York, aligning with job location."
+    ],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "modal-b5d00fdb": {
+    "score": 2,
+    "reasons": [
+      "Candidate has technical skills in Docker, Kubernetes, and AWS, but lacks 3+ years of relevant experience.",
+      "Role focuses on technical documentation; candidate's experience is more development-oriented rather than documentation-centric.",
+      "The role is located in New York, which is a mismatch with the candidate's current location."
+    ],
+    "gaps": [],
+    "redFlags": [
+      "Candidate is a new graduate and does not meet the 3+ years of experience requirement."
+    ],
+    "action": "skip"
+  },
+  "anthropic-99a8b87b": {
+    "score": 2,
+    "reasons": [
+      "Limited experience (only internship roles)",
+      "7+ years of experience required for the position",
+      "Candidate location is not a perfect match for the preferred job location"
+    ],
+    "gaps": [
+      "7+ years of software engineering experience",
+      "Experience with identity systems (SAML, OAuth)",
+      "Experience building educational technology products"
+    ],
+    "redFlags": [
+      "Job requires 7+ years of experience",
+      "Candidate not in ideal location for job"
+    ],
+    "action": "skip"
+  },
+  "anthropic-0826bfe5": {
+    "score": 3,
+    "reasons": [
+      "Strong technical skills in software engineering and AI/ML align well with job responsibilities.",
+      "Previous experience in an AI engineering role supports the mission-driven focus of the role.",
+      "Education in technology management demonstrates a commitment to effective tech solutions applied for social good."
+    ],
+    "gaps": [],
+    "redFlags": [],
+    "action": "apply_and_outreach"
+  },
+  "anthropic-56dbbedf": {
+    "score": 2,
+    "reasons": [
+      "Limited direct experience with security technology deployment; mostly focused on software and AI roles.",
+      "The role requires 5+ years of experience, which the candidate does not have.",
+      "Candidate's technical skill set is not aligned with physical security technology.ClubedExperience"
+    ],
+    "gaps": [],
+    "redFlags": [
+      "Minimum 5 years of experience required",
+      "Location preference for SF/Seattle over NYC may impact fit"
+    ],
+    "action": "skip"
+  },
+  "anthropic-056d49f2": {
+    "score": 2,
+    "reasons": [
+      "Limited direct IT support experience which is crucial for this role.",
+      "Candidate's skills are more aligned with AI and software engineering roles rather than IT support.",
+      "The position requires 7+ years of hands-on IT support, while the candidate is recent in their career."
+    ],
+    "gaps": [
+      "7+ years of hands-on IT support experience",
+      "Significant experience with Google Workspace administration",
+      "Experience supporting macOS endpoints and troubleshooting device issues"
+    ],
+    "redFlags": [
+      "Minimum years of experience (7+ years required)"
+    ],
+    "action": "skip"
+  },
+  "sierra-85b60786": {
+    "score": 3,
+    "reasons": [
+      "Strong technical skills in Python and AI, aligning with desired qualifications.",
+      "Relevant experience in multi-agent systems, beneficial for the role.",
+      "Currently pursuing a degree aligns with entry-level opportunities."
+    ],
+    "gaps": [],
+    "redFlags": [
+      "Minimum 10 years experience required for the role"
+    ],
+    "action": "skip"
+  }
+}
