@@ -8,7 +8,7 @@ export default async function JobPage({ params }: PageProps) {
   const { id } = await params;
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-16">
+    <main className="mx-auto w-full max-w-5xl px-4 pt-8 pb-16">
       <ScannedJob id={id} />
     </main>
   );
