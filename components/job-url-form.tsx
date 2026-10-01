@@ -54,7 +54,7 @@ export function JobUrlForm() {
         />
         {error ? <p className="mt-1 text-sm text-destructive">{error}</p> : null}
       </div>
-      <Button type="submit" variant="outline" disabled={loading}>
+      <Button type="submit" variant="outline" disabled={loading} className="rounded-full px-4">
         {loading ? <Loader2 className="size-4 animate-spin" /> : null}
         Open role
       </Button>

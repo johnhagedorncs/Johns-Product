@@ -63,12 +63,16 @@ export function AppNav() {
   }, []);
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-card/90 backdrop-blur">
-      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
-        <Link href={lastPath["/"] ?? "/"} className="text-base font-semibold tracking-tight">
+    <header className="sticky top-0 z-20 bg-background/90 backdrop-blur">
+      <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-5">
+        <div className="flex items-center gap-6 sm:gap-10">
+        <Link
+          href={lastPath["/"] ?? "/"}
+          className="font-heading text-xl whitespace-nowrap font-light tracking-tight sm:text-2xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+        >
           Warm Apply
         </Link>
-        <nav className="flex items-center gap-1" aria-label="Main">
+        <nav className="flex items-center gap-1 sm:gap-5" aria-label="Main">
           {links.map((link) => {
             const Icon = link.icon;
             const active = sectionOf(pathname) === link.href;
@@ -77,18 +81,19 @@ export function AppNav() {
                 key={link.href}
                 href={lastPath[link.href] ?? link.href}
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm transition-all duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                  "inline-flex items-center gap-1.5 px-1.5 py-1 text-[15px] underline-offset-[6px] transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                   active
-                    ? "bg-secondary text-secondary-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                    ? "text-foreground underline decoration-1"
+                    : "text-foreground/70 hover:text-foreground"
                 )}
               >
-                <Icon className="size-4" />
+                <Icon className="size-4 sm:hidden" />
                 <span className="sr-only sm:not-sr-only">{link.label}</span>
               </Link>
             );
           })}
         </nav>
+        </div>
         <div className="flex items-center gap-2">
           <ThemeToggle />
           <button
@@ -98,7 +103,7 @@ export function AppNav() {
             aria-label="Scan now"
             className={cn(
               buttonVariants(),
-              "bg-brand border-transparent transition-all duration-200 focus-visible:ring-2 focus-visible:ring-ring"
+              "h-10 rounded-full border-transparent bg-brand px-5 transition-all duration-200 hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring"
             )}
           >
             {spinning ? (
@@ -126,7 +131,7 @@ function ThemeToggle() {
         localStorage.setItem("warm-theme", next ? "dark" : "light");
         setDark(next);
       }}
-      className="rounded-full border border-border px-3 py-1 text-xs font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="rounded-full border border-border px-3 py-1.5 text-xs font-medium transition-all duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
       {dark ? "Light" : "Dark"}
     </button>

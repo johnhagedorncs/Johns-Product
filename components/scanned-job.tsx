@@ -61,7 +61,7 @@ export function ScannedJob({ id }: { id: string }) {
 
   if (gate === "missing" || !job) {
     return (
-      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
+      <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-10 text-center">
         <Radar className="mx-auto size-8 text-muted-foreground" />
         <p className="text-sm text-muted-foreground">
           This role is not in this browser&apos;s inbox. Scan again, or paste the job link to open it.

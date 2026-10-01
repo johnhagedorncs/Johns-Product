@@ -57,8 +57,8 @@ function Pills<T extends string>({
           className={cn(
             "rounded-full border px-3 py-1 text-sm transition-all duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
             value === id
-              ? "border-transparent bg-secondary text-secondary-foreground"
-              : "border-border text-muted-foreground hover:text-foreground"
+              ? "border-foreground bg-foreground text-background"
+              : "border-border text-muted-foreground hover:border-foreground/40 hover:text-foreground"
           )}
         >
           {text}
@@ -225,7 +225,7 @@ export function InboxBoard() {
       ) : null}
 
       {!scanning && loaded && !inbox ? (
-        <div className="rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
+        <div className="rounded-2xl border border-border bg-card p-10 text-center">
           <Radar className="mx-auto size-8 text-muted-foreground" />
           <p className="mt-3 text-sm text-muted-foreground">
             Hit <span className="font-medium text-foreground">Scan now</span> to pull {place} roles
@@ -236,7 +236,7 @@ export function InboxBoard() {
 
       {!scanning && inbox ? (
         <>
-          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
+          <div className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4">
             <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
               <p className="text-muted-foreground">
                 <span className="font-mono font-semibold text-foreground">{applyToday}</span> to apply
@@ -323,7 +323,7 @@ export function InboxBoard() {
           </div>
 
           {visible.length === 0 ? (
-            <div className="rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
+            <div className="rounded-2xl border border-border bg-card p-10 text-center">
               <Radar className="mx-auto size-8 text-muted-foreground" />
               <p className="mt-3 text-sm text-muted-foreground">
                 {jobs.length === 0

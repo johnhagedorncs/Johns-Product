@@ -50,7 +50,7 @@ export function KanbanBoard() {
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-2xl border border-border bg-card p-10 text-center shadow-sm">
+      <div className="rounded-2xl border border-border bg-card p-10 text-center">
         <Inbox className="mx-auto size-8 text-muted-foreground" />
         <p className="mt-3 text-sm text-muted-foreground">
           No outreach yet. Open a role and paste a LinkedIn profile.
@@ -74,7 +74,7 @@ export function KanbanBoard() {
             }}
           >
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-sm font-semibold">{formatStatusLabel(status)}</h2>
+              <h2 className="text-xl">{formatStatusLabel(status)}</h2>
               <span className="rounded-full bg-card px-2 py-0.5 font-mono text-xs">
                 {cards.length}
               </span>
@@ -87,7 +87,7 @@ export function KanbanBoard() {
                   onDragStart={(event) =>
                     event.dataTransfer.setData("text/plain", card.id)
                   }
-                  className="cursor-grab rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                  className="cursor-grab rounded-2xl border border-border bg-card p-4 transition-all duration-200 hover:border-foreground/40"
                 >
                   <div className="flex items-center justify-between gap-2">
                     <p className="font-medium">{card.person}</p>

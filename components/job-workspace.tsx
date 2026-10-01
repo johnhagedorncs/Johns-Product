@@ -55,10 +55,10 @@ export function JobWorkspace({
         <ArrowLeft className="size-4" /> Inbox
       </Link>
 
-      <article className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+      <article className="rounded-2xl border border-border bg-card p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-2xl font-semibold">{job.title}</h1>
+            <h1 className="text-4xl sm:text-5xl">{job.title}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {job.company} · {job.location || "Location not listed"}
               {job.teamHint ? ` · ${job.teamHint}` : ""}
@@ -89,15 +89,15 @@ export function JobWorkspace({
             href={job.jobUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex h-9 items-center gap-1.5 rounded-lg bg-brand px-4 text-sm font-medium text-white transition-all duration-200 hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            className="inline-flex h-9 items-center gap-1.5 rounded-full bg-brand px-5 text-sm font-medium transition-all duration-200 hover:opacity-90 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
           >
             Open posting & apply <ExternalLink className="size-3.5" />
           </a>
-          <Button type="button" variant="outline" onClick={() => toggle("applied")} aria-pressed={status === "applied"}>
+          <Button className="rounded-full px-4" type="button" variant="outline" onClick={() => toggle("applied")} aria-pressed={status === "applied"}>
             <Check className="size-4" />
             {status === "applied" ? "Applied" : "Mark applied"}
           </Button>
-          <Button type="button" variant="ghost" onClick={() => toggle("hidden")} aria-pressed={status === "hidden"}>
+          <Button className="rounded-full px-4" type="button" variant="ghost" onClick={() => toggle("hidden")} aria-pressed={status === "hidden"}>
             <EyeOff className="size-4" />
             {status === "hidden" ? "Hidden" : "Hide"}
           </Button>
@@ -108,14 +108,14 @@ export function JobWorkspace({
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <section className="flex flex-col gap-6">
           <ResumeMatch job={job} seeker={currentSeeker} reading={reading} />
-          <article className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <article className="rounded-2xl border border-border bg-card p-6">
             <button
               type="button"
               onClick={() => setShowDescription((open) => !open)}
               aria-expanded={showDescription}
               className="flex w-full items-center justify-between text-left focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
-              <h2 className="text-lg font-semibold">Job description</h2>
+              <h2 className="text-3xl">Job description</h2>
               <ChevronDown className={cn("size-4 transition-transform", showDescription && "rotate-180")} />
             </button>
             <div

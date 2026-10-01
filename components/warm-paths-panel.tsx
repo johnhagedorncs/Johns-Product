@@ -86,8 +86,8 @@ export function WarmPathsPanel({ job, seeker }: { job: Job; seeker: SeekerPrefs 
   const people = mergeRolePeople(known, found ?? []);
 
   return (
-    <article className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-      <h2 className="text-lg font-semibold">Warm paths into {job.company}</h2>
+    <article className="rounded-2xl border border-border bg-card p-6">
+      <h2 className="text-3xl">Warm paths into {job.company}</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         Ranked searches. Each opens in your logged-in LinkedIn — pick 2–3 people, then draft below.
       </p>
@@ -145,7 +145,7 @@ export function WarmPathsPanel({ job, seeker }: { job: Job; seeker: SeekerPrefs 
       <div className="mt-5 border-t border-border pt-4">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm font-medium">Names found</p>
-          <Button type="button" variant="outline" size="sm" onClick={searchWeb} disabled={searching}>
+          <Button type="button" variant="outline" size="sm" onClick={searchWeb} disabled={searching} className="rounded-full px-4">
             {searching ? <Loader2 className="size-3.5 animate-spin" /> : <Search className="size-3.5" />}
             {found ? "Search again" : "Find names with AI"}
           </Button>
@@ -163,7 +163,7 @@ export function WarmPathsPanel({ job, seeker }: { job: Job; seeker: SeekerPrefs 
           <ul className="mt-3 flex flex-col gap-3">
             {people.map((person) => (
               <li key={person.name} className="flex items-center gap-3">
-                <div className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-xs font-semibold text-white">
+                <div className="grid size-9 shrink-0 place-items-center rounded-full bg-brand text-xs font-semibold">
                   {initials(person.name)}
                 </div>
                 <div className="min-w-0">

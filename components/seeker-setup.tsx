@@ -70,17 +70,17 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
   const snapshot = resumeSnapshot(prefs);
 
   return (
-    <section className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+    <section className="rounded-2xl bg-secondary p-6 text-secondary-foreground sm:p-8">
       <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
         <div className="flex min-w-0 items-start gap-3">
-          <div className="grid size-11 shrink-0 place-items-center rounded-full bg-secondary text-secondary-foreground">
+          <div className="grid size-11 shrink-0 place-items-center rounded-full bg-background text-foreground">
             <FileText className="size-5" />
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+            <p className="text-xs font-medium tracking-wide text-secondary-foreground/75 uppercase">
               Scoring against
             </p>
-            <p className="truncate font-semibold">
+            <p className="truncate font-heading text-2xl font-light">
               {saving ? (
                 <span className="inline-flex items-center gap-1.5">
                   <Loader2 className="size-4 animate-spin" /> Reading PDF…
@@ -89,7 +89,7 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
                 snapshot.fileName
               )}
             </p>
-            <p className="mt-0.5 text-sm text-muted-foreground">
+            <p className="mt-0.5 text-sm text-secondary-foreground/75">
               {snapshot.gradYear ? `Class of ${snapshot.gradYear}` : "No graduation year found"} ·{" "}
               <button
                 type="button"
@@ -109,7 +109,7 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
               aria-label="Location"
               value={prefs.locationId}
               onChange={(event) => commit({ ...prefs, locationId: event.target.value })}
-              className="rounded-full border border-border bg-muted/60 px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="rounded-full border border-foreground/20 bg-background/80 px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             >
               {TARGET_LOCATIONS.map((location) => (
                 <option key={location.id} value={location.id}>
@@ -118,7 +118,7 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
               ))}
             </select>
           </label>
-          <label className="cursor-pointer rounded-full border border-border px-3 py-1.5 text-sm font-medium transition-all duration-200 hover:bg-muted focus-within:ring-2 focus-within:ring-ring">
+          <label className="cursor-pointer rounded-full bg-brand px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:opacity-85 focus-within:ring-2 focus-within:ring-ring">
             Upload PDF
             <input
               type="file"
@@ -136,7 +136,7 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
             <button
               type="button"
               onClick={() => commit({ ...prefs, resumeText: "", resumeFileName: "" })}
-              className="inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              className="inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-sm text-secondary-foreground/75 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               aria-label="Use saved resume"
             >
               <RotateCcw className="size-3.5" /> Saved
@@ -147,7 +147,7 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
       {showSkills ? (
         <div className="mt-4 flex flex-wrap gap-1.5">
           {snapshot.skills.map((skill) => (
-            <Chip key={skill} tone="blue">
+            <Chip key={skill}>
               {skill}
             </Chip>
           ))}

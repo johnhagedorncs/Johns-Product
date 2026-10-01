@@ -52,9 +52,9 @@ export function ResumeMatch({
   const verdict = fit ? VERDICT[fit.action] : null;
 
   return (
-    <article className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+    <article className="rounded-2xl border border-border bg-card p-6">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">Resume match</h2>
+        <h2 className="text-3xl">Resume match</h2>
         <div className="flex items-center gap-2">
           {reading ? (
             <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -128,7 +128,7 @@ export function ResumeMatch({
           <p className="text-sm text-muted-foreground">
             Line-by-line edits to make before you hit apply.
           </p>
-          <Button type="button" variant="outline" onClick={onTailor} disabled={tailoring || !job.description}>
+          <Button type="button" variant="outline" onClick={onTailor} disabled={tailoring || !job.description} className="rounded-full px-4">
             {tailoring ? <Loader2 className="size-4 animate-spin" /> : <Wand2 className="size-4" />}
             Tailor my resume
           </Button>

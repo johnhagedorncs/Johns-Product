@@ -42,7 +42,7 @@ export function DraftBox({
         <span className={cn("font-mono text-xs", over ? "text-destructive" : "text-muted-foreground")}>
           {email.length}/{EMAIL_LIMIT}
         </span>
-        <Button type="button" variant="outline" onClick={copy}>
+        <Button type="button" variant="outline" onClick={copy} className="rounded-full px-4">
           {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
           {copied ? "Copied" : "Copy"}
         </Button>

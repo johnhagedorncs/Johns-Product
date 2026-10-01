@@ -1,21 +1,28 @@
 # Warm Apply
 
-Slate canvas, white cards, one indigo-to-violet accent. Inter for UI, JetBrains Mono for scores and counts. Dark mode is a header toggle.
+Editorial and calm, after Squarespace's Beacon template: white canvas, black ink, a light serif for headlines, and a few muted accents. Space and type do the work, not shadows or gradients. Dark mode is a header toggle and inverts to a black canvas.
+
+## Type
+- Headings (`h1`–`h3`): Crimson Pro Light (300), tight tracking (-0.035em), line-height 1.05
+  - Page titles `text-5xl sm:text-6xl`, job title `text-4xl sm:text-5xl`, section headings `text-3xl`, list item titles `text-2xl`
+- Body and UI: Inter, slight negative tracking
+- Scores and counts: JetBrains Mono
+- Wordmark: "Warm Apply" in Crimson Pro Light
 
 ## Colors
-- Background: `#F8FAFC` (dark `#020617`)
-- Cards: `#FFFFFF` (dark `#0F172A`)
-- Text: `#0F172A`
-- Muted: `#475569`
-- Border: `#E2E8F0`
-- Brand gradient: `#4F46E5` → `#7C3AED`
-- Success: `#15803D`
-- Warning: `#B45309`
-- Danger: `#BE123C`
+- Background / cards: `#FFFFFF` (dark `#000000` / `#0D0D0D`)
+- Text: `#000000`, muted `#5C5C5C`
+- Border: `#E4E4DF` hairline
+- Primary (buttons, avatars): black `#000000` (dark: white)
+- Secondary: dusty blue `#B3C3CF` for the hero band
+- Accent: chartreuse `#ECEC8A` for tier chips
+- Success `#2F6B3F` · Warning (rust) `#8D4F2F` · Danger `#B3261E`
 
 ## Shape
-- Cards: rounded-2xl, border, shadow-sm, hover shadow-md and a slight lift
-- Page width: max-w-5xl
-- Primary actions use the brand gradient
+- Buttons: pill (`rounded-full`), solid black for primary, hairline outline for secondary
+- Cards: `rounded-2xl`, hairline border, no shadow; hover darkens the border
+- Filter pills: outline, solid black when active
+- Nav: wordmark left, plain text links with an underline on the active page, black pill "Scan now" on the right
+- Page width `max-w-5xl`, generous vertical rhythm (`py-12 sm:py-16`)
 
-Tokens live in `app/globals.css` `:root` and `.dark`.
+Tokens live in `app/globals.css` `:root` and `.dark`; `.bg-brand` is solid primary ink.

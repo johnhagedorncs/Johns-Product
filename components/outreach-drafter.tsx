@@ -72,8 +72,8 @@ export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => Seeke
 
   return (
     <div className="flex flex-col gap-4">
-      <form onSubmit={onDraft} className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Draft a note</h2>
+      <form onSubmit={onDraft} className="rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-3xl">Draft a note</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           Open a profile from the warm paths, select all (⌘A), copy, and paste here. Drafts only — you send it.
         </p>
@@ -86,7 +86,7 @@ export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => Seeke
           placeholder="Paste their LinkedIn profile — headline, About, experience, education."
           className="mt-3 w-full rounded-2xl border border-border bg-muted/60 p-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         />
-        <Button type="submit" disabled={drafting} className="mt-3 border-transparent bg-brand">
+        <Button type="submit" disabled={drafting} className="rounded-full px-4 mt-3 border-transparent bg-brand">
           {drafting ? <Loader2 className="size-4 animate-spin" /> : null}
           Draft outreach
         </Button>
@@ -94,14 +94,14 @@ export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => Seeke
       </form>
 
       {draft ? (
-        <article className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+        <article className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center gap-3">
-            <div className="grid size-11 place-items-center rounded-full bg-brand text-sm font-semibold text-white">
+            <div className="grid size-11 place-items-center rounded-full bg-brand text-sm font-semibold">
               {initials(draft.personName)}
             </div>
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
-                <h3 className="font-semibold">{draft.personName}</h3>
+                <h3 className="text-2xl">{draft.personName}</h3>
                 {draft.sharedHook ? <Chip tone="purple">{draft.sharedHook}</Chip> : null}
               </div>
               <p className="text-sm text-muted-foreground">{draft.rankReason}</p>
@@ -110,7 +110,7 @@ export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => Seeke
           <div className="mt-4">
             <DraftBox email={note} onChange={setNote} />
           </div>
-          <Button type="button" onClick={markMessaged} disabled={messaged} className="mt-4 border-transparent bg-brand">
+          <Button type="button" onClick={markMessaged} disabled={messaged} className="rounded-full px-4 mt-4 border-transparent bg-brand">
             {messaged ? "Messaged ✓ — follow-up in 3 business days" : "Mark messaged"}
           </Button>
         </article>

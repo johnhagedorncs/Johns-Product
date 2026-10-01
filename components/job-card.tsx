@@ -25,15 +25,15 @@ export function JobCard({ job, isNew, applied }: { job: Job; isNew: boolean; app
   return (
     <Link
       href={`/jobs/${encodeURIComponent(job.id)}`}
-      className="block rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="block rounded-2xl border border-border bg-card p-5 transition-all duration-200 hover:border-foreground/40 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
       <div className="flex items-start gap-4">
-        <div className="grid size-11 shrink-0 place-items-center rounded-full bg-brand text-sm font-semibold text-white">
+        <div className="grid size-11 shrink-0 place-items-center rounded-full bg-brand text-sm font-semibold">
           {initials(job.company)}
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="text-base font-semibold">{job.title}</h2>
+            <h2 className="text-2xl leading-tight">{job.title}</h2>
             {isNew ? <Chip tone="blue">New</Chip> : null}
             {applied ? (
               <Chip tone="green" icon={<Check className="size-3" />}>

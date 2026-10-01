@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Crimson_Pro, Inter, JetBrains_Mono } from "next/font/google";
 import { AppNav } from "@/components/app-nav";
 import "./globals.css";
 
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+});
+
+const crimson = Crimson_Pro({
+  variable: "--font-crimson",
+  subsets: ["latin"],
+  weight: ["300", "400"],
 });
 
 const jetbrains = JetBrains_Mono({
@@ -22,7 +28,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrains.variable} h-full antialiased`}
+      className={`${inter.variable} ${crimson.variable} ${jetbrains.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>
