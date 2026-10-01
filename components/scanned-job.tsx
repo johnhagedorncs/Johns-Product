@@ -8,6 +8,7 @@ import { JobUrlForm } from "@/components/job-url-form";
 import { JobWorkspace } from "@/components/job-workspace";
 import { applyEnrichment } from "@/lib/enrich";
 import { findInboxJob, saveAiFits, upsertInboxJob } from "@/lib/inbox-store";
+import { markReadThisSession, wasReadThisSession } from "@/lib/job-session";
 import { effectiveResume, parseSeekerPrefs, SEEKER_STORAGE_KEY, textHash } from "@/lib/seeker";
 import type { Job } from "@/lib/types";
 
@@ -25,6 +26,9 @@ export function ScannedJob({ id }: { id: string }) {
     setJob(match);
     setGate(match ? "ready" : "missing");
     if (!match || (match.description && match.fit?.basis === "ai")) return;
+    // Coming back from another tab shouldn't re-read the posting (or retry a failed read).
+    if (wasReadThisSession(match.id)) return;
+    markReadThisSession(match.id);
 
     let cancelled = false;
     const seeker = parseSeekerPrefs(localStorage.getItem(SEEKER_STORAGE_KEY));

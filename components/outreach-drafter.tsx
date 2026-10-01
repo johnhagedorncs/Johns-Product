@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { draftLinkedInForJob } from "@/app/actions/ai";
 import { Chip } from "@/components/chip";
@@ -8,17 +8,25 @@ import { DraftBox } from "@/components/draft-box";
 import { Button } from "@/components/ui/button";
 import type { LinkedInDraft } from "@/lib/ai/linkedin-draft";
 import { initials } from "@/lib/draft-text";
+import { readDraft, saveDraft } from "@/lib/job-session";
 import type { SeekerPrefs } from "@/lib/seeker";
 import { addBusinessDays, parseTrackerOverrides, TRACKER_STORAGE_KEY } from "@/lib/tracker";
 import type { Job } from "@/lib/types";
 
 export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => SeekerPrefs }) {
-  const [paste, setPaste] = useState("");
+  // Rendered only after the role loads in the browser, so storage is safe to read here.
+  const [saved] = useState(() => readDraft(job.id));
+  const [paste, setPaste] = useState(saved?.paste ?? "");
   const [drafting, setDrafting] = useState(false);
-  const [draft, setDraft] = useState<LinkedInDraft | null>(null);
-  const [note, setNote] = useState("");
-  const [messaged, setMessaged] = useState(false);
+  const [draft, setDraft] = useState<LinkedInDraft | null>(saved?.draft ?? null);
+  const [note, setNote] = useState(saved?.note ?? "");
+  const [messaged, setMessaged] = useState(saved?.messaged ?? false);
   const [error, setError] = useState("");
+
+  // Autosave so switching tabs never loses a draft in progress.
+  useEffect(() => {
+    saveDraft(job.id, { paste, draft, note, messaged });
+  }, [job.id, paste, draft, note, messaged]);
 
   async function onDraft(event: React.FormEvent) {
     event.preventDefault();

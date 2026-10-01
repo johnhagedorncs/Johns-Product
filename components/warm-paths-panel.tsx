@@ -8,10 +8,11 @@ import { Chip } from "@/components/chip";
 import { Button } from "@/components/ui/button";
 import { initials } from "@/lib/draft-text";
 import { findInboxJob, upsertInboxJob } from "@/lib/inbox-store";
+import { readWarmPaths, saveWarmPaths, warmPathsKey } from "@/lib/job-session";
 import { readPeopleCache, writePeopleCache } from "@/lib/people-cache";
 import { mergeRolePeople, peopleForRole, type RolePerson } from "@/lib/people";
 import { resumeHooks } from "@/lib/resume-hooks";
-import { effectiveResume, type SeekerPrefs } from "@/lib/seeker";
+import { effectiveResume, textHash, type SeekerPrefs } from "@/lib/seeker";
 import { getSeedTrackerRows, mergeTrackerRows, parseTrackerOverrides, TRACKER_STORAGE_KEY } from "@/lib/tracker";
 import { warmPaths, type WarmPath } from "@/lib/warm-paths";
 import type { Job } from "@/lib/types";
@@ -37,6 +38,12 @@ export function WarmPathsPanel({ job, seeker }: { job: Job; seeker: SeekerPrefs 
 
   useEffect(() => {
     let cancelled = false;
+    const cacheKey = warmPathsKey(job.id, textHash(resume), seeker.locationId);
+    const saved = readWarmPaths(cacheKey);
+    if (saved) {
+      setVisible(saved);
+      return;
+    }
     setVisible(null);
     async function load() {
       // Searching inside the company's own People tab needs its LinkedIn slug;
@@ -49,13 +56,14 @@ export function WarmPathsPanel({ job, seeker }: { job: Job; seeker: SeekerPrefs 
       }
       const current = warmPaths({ ...job, companyLinkedIn: slug }, resumeHooks(resume), seeker.locationId);
       const next = await visibleWarmPaths(current).catch(() => current);
+      saveWarmPaths(cacheKey, next);
       if (!cancelled) setVisible(next);
     }
     void load();
     return () => {
       cancelled = true;
     };
-  }, [job, resume, seeker.locationId]);
+  }, [job.id, job.company, job.title, job.companyLinkedIn, resume, seeker.locationId]);
 
   async function searchWeb() {
     setSearching(true);
