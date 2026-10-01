@@ -80,7 +80,7 @@ describe("company-scoped searches", () => {
     const school = paths.find((path) => path.kind === "school")!;
     expect(school.scoped).toBe(true);
     expect(school.linkedinUrl).toBe(
-      "https://www.linkedin.com/company/grow-with-clay/people/?keywords=University+of+California%2C+Santa+Barbara"
+      "https://www.linkedin.com/company/grow-with-clay/people/?keywords=University+of+California+Santa+Barbara"
     );
     expect(new URL(paths.find((path) => path.kind === "employer")!.linkedinUrl).searchParams.get("keywords")).toBe("BrightAI");
     expect(new URL(paths.find((path) => path.kind === "recruiter")!.linkedinUrl).searchParams.get("keywords")).toBe("recruiter");

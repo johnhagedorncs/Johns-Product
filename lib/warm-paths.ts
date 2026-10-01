@@ -96,9 +96,14 @@ function path(
   };
 }
 
-/** The most formal alias — "University of California, Santa Barbara" is how the school shows on profiles. */
+/**
+ * The most formal alias, commas dropped — LinkedIn's People-tab search stops
+ * at a comma, so "University of California, Santa Barbara" would search
+ * every UC campus.
+ */
 function longest(terms: string[]): string {
-  return terms.reduce((best, term) => (term.length > best.length ? term : best), terms[0] ?? "");
+  const best = terms.reduce((top, term) => (term.length > top.length ? term : top), terms[0] ?? "");
+  return best.replace(/\s*,\s*/g, " ");
 }
 
 /**
