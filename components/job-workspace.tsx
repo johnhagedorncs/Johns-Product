@@ -58,7 +58,7 @@ export function JobWorkspace({
       <article className="rounded-2xl border border-border bg-card p-6">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-4xl sm:text-5xl">{job.title}</h1>
+            <h1 className="text-5xl">{job.title}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {job.company} · {job.location || "Location not listed"}
               {job.teamHint ? ` · ${job.teamHint}` : ""}
@@ -105,7 +105,7 @@ export function JobWorkspace({
         {readError ? <p className="mt-3 text-sm text-warning">{readError}</p> : null}
       </article>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+      <div className="grid gap-6 grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
         <section className="flex flex-col gap-6">
           <ResumeMatch job={job} seeker={currentSeeker} reading={reading} />
           <article className="rounded-2xl border border-border bg-card p-6">

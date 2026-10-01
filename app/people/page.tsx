@@ -22,8 +22,8 @@ export default function PeoplePage() {
   }, []);
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-12 sm:py-16">
-      <h1 className="text-5xl sm:text-6xl">People</h1>
+    <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-4 py-16">
+      <h1 className="text-6xl">People</h1>
       {rows.length === 0 ? (
         <div className="rounded-2xl border border-border bg-card p-10 text-center">
           <Users className="mx-auto size-8 text-muted-foreground" />

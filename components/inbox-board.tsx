@@ -277,7 +277,7 @@ export function InboxBoard() {
                   ["hidden", "Hidden"],
                 ]}
               />
-              <span className="hidden h-5 w-px bg-border sm:block" />
+              <span className="h-5 w-px bg-border" />
               <Pills
                 label="Minimum fit"
                 value={minFit}
@@ -288,7 +288,7 @@ export function InboxBoard() {
                   ["4", "4+"],
                 ]}
               />
-              <span className="hidden h-5 w-px bg-border sm:block" />
+              <span className="h-5 w-px bg-border" />
               <Pills
                 label="Sort roles"
                 value={sort}

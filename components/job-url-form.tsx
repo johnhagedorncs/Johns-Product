@@ -40,7 +40,7 @@ export function JobUrlForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full flex-col gap-2 sm:flex-row sm:items-start">
+    <form onSubmit={handleSubmit} className="flex w-full flex-row items-start gap-2">
       <div className="relative flex-1">
         <Link2 className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
         <Input

@@ -3,16 +3,16 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Inbox, Kanban, Loader2, Radar, Settings, Users } from "lucide-react";
+import { Loader2, Radar } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { requestInboxScan } from "@/lib/inbox-session";
 import { cn } from "cn";
 
 const links = [
-  { href: "/", label: "Inbox", icon: Inbox },
-  { href: "/tracker", label: "Tracker", icon: Kanban },
-  { href: "/people", label: "People", icon: Users },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/", label: "Inbox" },
+  { href: "/tracker", label: "Tracker" },
+  { href: "/people", label: "People" },
+  { href: "/settings", label: "Settings" },
 ];
 
 const NAV_MEMORY_KEY = "warm-apply-nav";
@@ -65,16 +65,15 @@ export function AppNav() {
   return (
     <header className="sticky top-0 z-20 bg-background/90 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-5">
-        <div className="flex items-center gap-6 sm:gap-10">
+        <div className="flex items-center gap-10">
         <Link
           href={lastPath["/"] ?? "/"}
-          className="font-heading text-xl whitespace-nowrap font-light tracking-tight sm:text-2xl focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          className="font-heading text-2xl whitespace-nowrap font-light tracking-tight focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
           Warm Apply
         </Link>
-        <nav className="flex items-center gap-1 sm:gap-5" aria-label="Main">
+        <nav className="flex items-center gap-5" aria-label="Main">
           {links.map((link) => {
-            const Icon = link.icon;
             const active = sectionOf(pathname) === link.href;
             return (
               <Link
@@ -87,8 +86,7 @@ export function AppNav() {
                     : "text-foreground/70 hover:text-foreground"
                 )}
               >
-                <Icon className="size-4 sm:hidden" />
-                <span className="sr-only sm:not-sr-only">{link.label}</span>
+                <span>{link.label}</span>
               </Link>
             );
           })}
@@ -111,7 +109,7 @@ export function AppNav() {
             ) : (
               <Radar className="size-4" />
             )}
-            <span className="hidden sm:inline">Scan now</span>
+            <span>Scan now</span>
           </button>
         </div>
       </div>

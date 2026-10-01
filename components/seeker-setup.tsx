@@ -70,8 +70,8 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
   const snapshot = resumeSnapshot(prefs);
 
   return (
-    <section className="rounded-2xl bg-secondary p-6 text-secondary-foreground sm:p-8">
-      <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+    <section className="rounded-2xl bg-secondary p-8 text-secondary-foreground">
+      <div className="grid grid-cols-[1fr_auto] gap-4">
         <div className="flex min-w-0 items-start gap-3">
           <div className="grid size-11 shrink-0 place-items-center rounded-full bg-background text-foreground">
             <FileText className="size-5" />
@@ -102,7 +102,7 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
             </p>
           </div>
         </div>
-        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        <div className="flex flex-wrap items-center gap-2 justify-end">
           <label className="flex items-center gap-2 text-sm">
             <span className="sr-only">Location</span>
             <select
