@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
+import { normalizeCompany } from "@/lib/sources/ats";
 import {
+  companySlugIn,
   fetchLinkedInPosting,
   linkedInIdFromUrl,
   linkedInSearchUrl,
   parseLinkedInCards,
   parseLinkedInPosting,
   postedFromAgo,
+  resolveCompanySlug,
   scanLinkedIn,
 } from "@/lib/sources/linkedin";
 import { fakeFetch } from "@/lib/sources/sources.test-helpers";
@@ -17,7 +20,7 @@ function card(id: string, title: string, company: string, location: string, date
       <h3 class="base-search-card__title">
         ${title}
       </h3>
-      <h4 class="base-search-card__subtitle"><a href="https://www.linkedin.com/company/x">${company}</a></h4>
+      <h4 class="base-search-card__subtitle"><a href="https://www.linkedin.com/company/${company.toLowerCase()}?trk=x">${company}</a></h4>
       <span class="job-search-card__location">${location}</span>
       <time class="job-search-card__listdate" datetime="${date}">4 days ago</time>
     </div>
@@ -119,3 +122,30 @@ describe("LinkedIn job posting", () => {
     expect(linkedInIdFromUrl("nope")).toBeNull();
   });
 });
+
+describe("LinkedIn company pages", () => {
+  it("reads the company slug from cards and postings", () => {
+    expect(parseLinkedInCards(page)[0].companySlug).toBe("doordash");
+    expect(companySlugIn('<a href="https://www.linkedin.com/company/grow-with-clay?trk=1">')).toBe("grow-with-clay");
+    expect(companySlugIn("<a href=\"#\">")).toBeUndefined();
+    expect(
+      parseLinkedInPosting('<a class="topcard__org-name-link" href="https://www.linkedin.com/company/cursorai?trk=x">Cursor</a>').companySlug
+    ).toBe("cursorai");
+  });
+
+  it("resolves a slug only from an exact company-name match", async () => {
+    const results = [card("1", "Software Engineer", "Clayton", "NYC"), card("2", "Software Engineer", "Clayton", "NYC")].join("");
+    const clay = [card("3", "GTM Engineer", "Clay", "NYC")].join("").replace("/company/clay?", "/company/grow-with-clay?");
+    const fetchImpl = fakeFetch([
+      ["keywords=Clay+software", clay],
+      ["keywords=Clay&", results],
+      ["keywords=Nobody", ""],
+      ["keywords=Down", "", 500],
+    ]);
+    expect(await resolveCompanySlug("Clay", normalizeCompany, fetchImpl)).toBe("grow-with-clay");
+    expect(await resolveCompanySlug("Nobody", normalizeCompany, fetchImpl)).toBeNull();
+    expect(await resolveCompanySlug("Down", normalizeCompany, fetchImpl)).toBeNull();
+    expect(await resolveCompanySlug("  ", normalizeCompany, fetchImpl)).toBeNull();
+  });
+});
+

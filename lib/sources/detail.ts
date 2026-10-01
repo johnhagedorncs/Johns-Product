@@ -35,6 +35,7 @@ type Posting = {
   description: string;
   postedAt?: string;
   applicants?: string;
+  companySlug?: string;
 };
 
 async function workdayPosting(apiUrl: string, fetchImpl: FetchLike): Promise<Posting | null> {
@@ -146,6 +147,7 @@ export async function jobFromUrl(url: string, fetchImpl: FetchLike = fetch): Pro
     source: "url",
     sources: [linkedinId ? "linkedin" : "url"],
     onWatchList: Boolean(watch),
+    companyLinkedIn: posting.companySlug ?? watch?.linkedin ?? undefined,
     applicants: posting.applicants || undefined,
   };
 }

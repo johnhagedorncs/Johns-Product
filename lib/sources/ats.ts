@@ -16,6 +16,8 @@ export type WatchCompany = {
   ats: string;
   slug: string | null;
   why: string;
+  /** LinkedIn company page slug, null when no exact match was found */
+  linkedin?: string | null;
 };
 
 const companies = (companiesFile as { companies: WatchCompany[] }).companies;
@@ -71,6 +73,7 @@ function toJob(company: WatchCompany, source: JobSource, raw: Raw): Job {
     source,
     sources: [source],
     onWatchList: true,
+    companyLinkedIn: company.linkedin ?? undefined,
   };
 }
 

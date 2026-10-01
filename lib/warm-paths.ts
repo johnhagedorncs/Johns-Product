@@ -12,6 +12,8 @@ export type WarmPath = {
   points: number;
   linkedinUrl: string;
   googleUrl: string;
+  /** True when linkedinUrl searches the company's own employee list; false = keyword search that can match names */
+  scoped: boolean;
 };
 
 /** LinkedIn geo IDs for the people-search location filter. */
@@ -54,9 +56,22 @@ export function linkedInPeopleUrl(keywords: string, locationId?: string): string
   return `https://www.linkedin.com/search/results/people/?${params.toString()}`;
 }
 
+/** The company's People tab, filtered — lists only people who work there now. */
+export function companyPeopleUrl(slug: string, keywords: string): string {
+  return `https://www.linkedin.com/company/${encodeURIComponent(slug)}/people/?${new URLSearchParams({ keywords }).toString()}`;
+}
+
 export function googleProfilesUrl(query: string): string {
   return `https://www.google.com/search?${new URLSearchParams({ q: `site:linkedin.com/in ${query}` }).toString()}`;
 }
+
+type Search = {
+  /** Full keyword search, company name included */
+  keywords: string;
+  /** What to type into the company's People tab search box */
+  employeeKeywords: string;
+  locationId?: string;
+};
 
 function path(
   kind: WarmPathKind,
@@ -64,8 +79,8 @@ function path(
   label: string,
   why: string,
   points: number,
-  keywords: string,
-  locationId?: string
+  search: Search,
+  slug?: string
 ): WarmPath {
   return {
     id: `${kind}:${id}`,
@@ -73,9 +88,17 @@ function path(
     label,
     why,
     points,
-    linkedinUrl: linkedInPeopleUrl(keywords, locationId),
-    googleUrl: googleProfilesUrl(keywords),
+    linkedinUrl: slug
+      ? companyPeopleUrl(slug, search.employeeKeywords)
+      : linkedInPeopleUrl(search.keywords, search.locationId),
+    googleUrl: googleProfilesUrl(search.keywords),
+    scoped: Boolean(slug),
   };
+}
+
+/** The most formal alias — "University of California, Santa Barbara" is how the school shows on profiles. */
+function longest(terms: string[]): string {
+  return terms.reduce((best, term) => (term.length > best.length ? term : best), terms[0] ?? "");
 }
 
 /**
@@ -83,7 +106,12 @@ function path(
  * first (anywhere — warm ties travel), then same-function and recruiting in
  * the target city. You open each search in your own logged-in browser.
  */
-export function warmPaths(job: Pick<Job, "company" | "title">, hooks: ResumeHooks, locationId: string): WarmPath[] {
+export function warmPaths(
+  job: Pick<Job, "company" | "title" | "companyLinkedIn">,
+  hooks: ResumeHooks,
+  locationId: string
+): WarmPath[] {
+  const slug = job.companyLinkedIn || undefined;
   const company = searchCompanyName(job.company);
   const co = quote(company);
   const paths: WarmPath[] = [];
@@ -91,31 +119,35 @@ export function warmPaths(job: Pick<Job, "company" | "title">, hooks: ResumeHook
   for (const group of hooks.groups) {
     paths.push(
       path("group", group, `${group} at ${company}`, `Shared group — the warmest cold note you can send`, 4,
-        `${co} ${anyOf(hookAliases(group))}`)
+        { keywords: `${co} ${anyOf(hookAliases(group))}`, employeeKeywords: hookAliases(group)[0] }, slug)
     );
   }
   for (const school of hooks.schools) {
     paths.push(
       path("school", school, `${school} alumni at ${company}`, `Same school — lead with it in the first line`, 3,
-        `${co} ${anyOf(hookAliases(school))}`)
+        { keywords: `${co} ${anyOf(hookAliases(school))}`, employeeKeywords: longest(hookAliases(school)) }, slug)
     );
   }
   for (const employer of hooks.employers) {
     if (employer.toLowerCase() === company.toLowerCase()) continue;
     paths.push(
       path("employer", employer, `Ex-${employer} at ${company}`, `Shared employer — ask how they made the jump`, 2,
-        `${co} ${quote(employer)}`)
+        { keywords: `${co} ${quote(employer)}`, employeeKeywords: employer }, slug)
     );
   }
 
   const fn = roleFunction(job.title);
   paths.push(
     path("function", fn.keyword, `${fn.label} at ${company}`, `Same function — can speak to the team and refer`, 4,
-      `${co} ${quote(fn.keyword)}`, locationId)
+      { keywords: `${co} ${quote(fn.keyword)}`, employeeKeywords: fn.keyword, locationId }, slug)
   );
   paths.push(
     path("recruiter", "recruiting", `Recruiters at ${company}`, `Recruiting — can confirm the req and route your application`, 3,
-      `${co} ${anyOf(["university recruiter", "technical recruiter", "talent acquisition"])}`, locationId)
+      {
+        keywords: `${co} ${anyOf(["university recruiter", "technical recruiter", "talent acquisition"])}`,
+        employeeKeywords: "recruiter",
+        locationId,
+      }, slug)
   );
 
   return paths.sort((a, b) => b.points - a.points);

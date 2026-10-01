@@ -12,6 +12,9 @@ vi.mock("@/app/actions/ai", () => ({
   tailorResumeForJob: vi.fn(),
   visibleWarmPaths: vi.fn(async (paths: unknown) => paths),
 }));
+vi.mock("@/app/actions/jobs", () => ({
+  linkedInCompanySlug: vi.fn(async () => null),
+}));
 
 const base: Job = {
   id: "anthropic-1",

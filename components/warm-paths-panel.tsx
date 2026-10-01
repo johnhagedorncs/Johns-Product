@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { ExternalLink, Loader2, Search } from "lucide-react";
 import { findPeopleForJob, visibleWarmPaths } from "@/app/actions/ai";
+import { linkedInCompanySlug } from "@/app/actions/jobs";
 import { Chip } from "@/components/chip";
 import { Button } from "@/components/ui/button";
 import { initials } from "@/lib/draft-text";
+import { findInboxJob, upsertInboxJob } from "@/lib/inbox-store";
 import { readPeopleCache, writePeopleCache } from "@/lib/people-cache";
 import { mergeRolePeople, peopleForRole, type RolePerson } from "@/lib/people";
 import { resumeHooks } from "@/lib/resume-hooks";
@@ -34,20 +36,26 @@ export function WarmPathsPanel({ job, seeker }: { job: Job; seeker: SeekerPrefs 
   }, [job, resume]);
 
   useEffect(() => {
-    const current = warmPaths(job, resumeHooks(resume), seeker.locationId);
     let cancelled = false;
     setVisible(null);
-    visibleWarmPaths(current)
-      .then((next) => {
-        if (!cancelled) setVisible(next);
-      })
-      .catch(() => {
-        if (!cancelled) setVisible(current);
-      });
+    async function load() {
+      // Searching inside the company's own People tab needs its LinkedIn slug;
+      // without it a keyword search matches people *named* after the company.
+      let slug = job.companyLinkedIn;
+      if (!slug) {
+        slug = (await linkedInCompanySlug(job.company).catch(() => null)) ?? undefined;
+        const stored = slug ? findInboxJob(job.id) : null;
+        if (stored) upsertInboxJob({ ...stored, companyLinkedIn: slug });
+      }
+      const current = warmPaths({ ...job, companyLinkedIn: slug }, resumeHooks(resume), seeker.locationId);
+      const next = await visibleWarmPaths(current).catch(() => current);
+      if (!cancelled) setVisible(next);
+    }
+    void load();
     return () => {
       cancelled = true;
     };
-  }, [job.company, job.title, resume, seeker.locationId]);
+  }, [job, resume, seeker.locationId]);
 
   async function searchWeb() {
     setSearching(true);
@@ -94,6 +102,11 @@ export function WarmPathsPanel({ job, seeker }: { job: Job; seeker: SeekerPrefs 
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">{path.label}</p>
               <p className="text-xs text-muted-foreground">{path.why}</p>
+              {!path.scoped ? (
+                <p className="text-xs text-warning">
+                  Keyword search — may include people named {job.company}. Filter by Current company on LinkedIn.
+                </p>
+              ) : null}
               <div className="mt-1 flex flex-wrap gap-3 text-sm">
                 <a
                   href={path.linkedinUrl}
@@ -101,7 +114,7 @@ export function WarmPathsPanel({ job, seeker }: { job: Job; seeker: SeekerPrefs 
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-1 font-medium text-primary"
                 >
-                  LinkedIn <ExternalLink className="size-3" />
+                  {path.scoped ? `${job.company} employees` : "LinkedIn"} <ExternalLink className="size-3" />
                 </a>
                 <a
                   href={path.googleUrl}

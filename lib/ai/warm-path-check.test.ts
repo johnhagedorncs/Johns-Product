@@ -22,6 +22,7 @@ function path(id: string, query: string, kind: WarmPath["kind"] = "employer"): W
     points: 2,
     linkedinUrl: "https://www.linkedin.com/search/results/people/?keywords=x",
     googleUrl: `https://www.google.com/search?q=${encodeURIComponent(query)}`,
+    scoped: false,
   };
 }
 

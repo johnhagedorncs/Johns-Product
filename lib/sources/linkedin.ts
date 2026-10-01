@@ -44,6 +44,11 @@ export function linkedInSearchUrl(keywords: string, locationId: string, start = 
   return `${SEARCH}?${params.toString()}`;
 }
 
+/** Slug from the first linkedin.com/company/<slug> link in an HTML fragment. */
+export function companySlugIn(html: string): string | undefined {
+  return html.match(/linkedin\.com\/company\/([^/?"#\s]+)/)?.[1];
+}
+
 function text(html: string, pattern: RegExp): string {
   const match = html.match(pattern);
   return match ? stripHtml(match[1]).replace(/\s+/g, " ").trim() : "";
@@ -51,6 +56,7 @@ function text(html: string, pattern: RegExp): string {
 
 export type LinkedInCard = {
   linkedinId: string;
+  companySlug?: string;
   title: string;
   company: string;
   location: string;
@@ -67,10 +73,12 @@ export function parseLinkedInCards(html: string): LinkedInCard[] {
     const company = text(chunk, /base-search-card__subtitle"?[^>]*>([\s\S]*?)<\/h4>/);
     const location = text(chunk, /job-search-card__location"?[^>]*>([\s\S]*?)<\/span>/);
     const date = chunk.match(/<time[^>]*datetime="([^"]+)"/)?.[1];
+    const companySlug = companySlugIn(chunk.match(/base-search-card__subtitle[\s\S]*?<\/h4>/)?.[0] ?? "");
     if (!title || !company) continue;
     const parsedDate = date ? new Date(`${date}T12:00:00Z`) : null;
     cards.push({
       linkedinId,
+      companySlug,
       title,
       company,
       location,
@@ -100,6 +108,7 @@ export function linkedInCardToJob(card: LinkedInCard): Job {
     source: "linkedin",
     sources: ["linkedin"],
     onWatchList: Boolean(watch),
+    companyLinkedIn: card.companySlug ?? watch?.linkedin ?? undefined,
   };
 }
 
@@ -148,6 +157,7 @@ export type LinkedInPosting = {
   description: string;
   applicants: string;
   postedAt?: string;
+  companySlug?: string;
 };
 
 /** "4 days ago" / "Reposted 3 weeks ago" → ISO date. */
@@ -179,10 +189,42 @@ export function parseLinkedInPosting(html: string): LinkedInPosting {
     location: text(html, /topcard__flavor topcard__flavor--bullet"?[^>]*>([\s\S]*?)<\/span>/),
     description,
     applicants: text(html, /num-applicants__caption"?[^>]*>([\s\S]*?)<\/(?:figcaption|span)>/),
+    companySlug: companySlugIn(html.match(/topcard__org-name-link[^>]*>/)?.[0] ?? ""),
     postedAt: postedFromAgo(text(html, /posted-time-ago__text[^>]*>([\s\S]*?)<\/span>/)),
   };
 }
 
 export async function fetchLinkedInPosting(id: string, fetchImpl: FetchLike = fetch): Promise<LinkedInPosting> {
   return parseLinkedInPosting(await fetchText(`${POSTING}/${id}`, fetchImpl, 12000));
+}
+
+/**
+ * LinkedIn company slug for a company name, read from public job cards. Only
+ * an exact company-name match counts — "Clay" must never resolve to Clayton.
+ */
+export async function resolveCompanySlug(
+  company: string,
+  normalize: (name: string) => string,
+  fetchImpl: FetchLike = fetch
+): Promise<string | null> {
+  const want = normalize(company);
+  if (!want) return null;
+  for (const keywords of [company, `${company} software engineer`]) {
+    const params = new URLSearchParams({ keywords, location: "United States" });
+    let cards: LinkedInCard[];
+    try {
+      cards = parseLinkedInCards(await fetchText(`${SEARCH}?${params.toString()}`, fetchImpl, 10000));
+    } catch {
+      return null;
+    }
+    const counts = new Map<string, number>();
+    for (const card of cards) {
+      if (card.companySlug && normalize(card.company) === want) {
+        counts.set(card.companySlug, (counts.get(card.companySlug) ?? 0) + 1);
+      }
+    }
+    const best = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
+    if (best) return best[0];
+  }
+  return null;
 }

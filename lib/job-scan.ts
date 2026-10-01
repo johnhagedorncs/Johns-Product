@@ -71,6 +71,7 @@ export function dedupeJobs(jobs: Job[]): Job[] {
       postedAt: posted,
       description: primary.description || other.description,
       applicants: primary.applicants ?? other.applicants,
+      companyLinkedIn: primary.companyLinkedIn ?? other.companyLinkedIn,
       early: Boolean(primary.early || other.early),
       onWatchList: Boolean(primary.onWatchList || other.onWatchList),
     });

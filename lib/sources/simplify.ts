@@ -42,6 +42,7 @@ export function simplifyJobs(data: unknown, locationId: string, now = Date.now()
       source: "simplify",
       sources: ["simplify"],
       onWatchList: Boolean(watch),
+      companyLinkedIn: watch?.linkedin ?? undefined,
     });
   }
   return jobs;

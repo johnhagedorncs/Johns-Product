@@ -7,7 +7,10 @@ import { scanAllSources, type ScanResult } from "@/lib/job-scan";
 import { getProfile } from "@/lib/profile";
 import { effectiveResume, normalizeSeeker, profileForSeeker, type SeekerPrefs } from "@/lib/seeker";
 import { pool } from "@/lib/sources/http";
+import { normalizeCompany, watchEntry } from "@/lib/sources/ats";
 import { fetchJobDetail, jobFromUrl } from "@/lib/sources/detail";
+import { resolveCompanySlug } from "@/lib/sources/linkedin";
+import { searchCompanyName } from "@/lib/warm-paths";
 import type { Job, JobFitResult } from "@/lib/types";
 
 const MAX_ENRICH = 8;
@@ -92,4 +95,19 @@ export async function importJobUrl(
   } catch (err) {
     return { error: err instanceof Error ? err.message.slice(0, 200) : "Could not read that link." };
   }
+}
+
+const slugCache = new Map<string, string | null>();
+
+/** LinkedIn company slug: watch list first, then an exact-name match from public job cards. */
+export async function linkedInCompanySlug(company: string): Promise<string | null> {
+  const known = watchEntry(company);
+  if (known?.linkedin) return known.linkedin;
+  const name = searchCompanyName(company);
+  const key = normalizeCompany(name);
+  if (!key) return null;
+  if (slugCache.has(key)) return slugCache.get(key) ?? null;
+  const slug = await resolveCompanySlug(name, normalizeCompany).catch(() => null);
+  slugCache.set(key, slug);
+  return slug;
 }

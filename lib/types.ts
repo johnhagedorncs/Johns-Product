@@ -49,6 +49,8 @@ export interface Job {
   /** Every board this role showed up on after de-duplication */
   sources?: JobSource[];
   onWatchList?: boolean;
+  /** LinkedIn company page slug (linkedin.com/company/<slug>) for employee searches */
+  companyLinkedIn?: string;
   /** LinkedIn's applicant count text, e.g. "Over 200 applicants" */
   applicants?: string;
   /** Set from the fit check — omitted until scored */

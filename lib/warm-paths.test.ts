@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  companyPeopleUrl,
   googleProfilesUrl,
   linkedInPeopleUrl,
   pathsWithLinkedInResults,
@@ -68,3 +69,29 @@ describe("search helpers", () => {
     expect(new URL(googleProfilesUrl('"Ramp" UCSB')).searchParams.get("q")).toBe('site:linkedin.com/in "Ramp" UCSB');
   });
 });
+
+describe("company-scoped searches", () => {
+  it("searches the company's own employees when its LinkedIn page is known", () => {
+    const paths = warmPaths(
+      { company: "Clay", title: "GTM Engineer", companyLinkedIn: "grow-with-clay" },
+      { schools: ["UCSB"], groups: [], employers: ["BrightAI"] },
+      "nyc"
+    );
+    const school = paths.find((path) => path.kind === "school")!;
+    expect(school.scoped).toBe(true);
+    expect(school.linkedinUrl).toBe(
+      "https://www.linkedin.com/company/grow-with-clay/people/?keywords=University+of+California%2C+Santa+Barbara"
+    );
+    expect(new URL(paths.find((path) => path.kind === "employer")!.linkedinUrl).searchParams.get("keywords")).toBe("BrightAI");
+    expect(new URL(paths.find((path) => path.kind === "recruiter")!.linkedinUrl).searchParams.get("keywords")).toBe("recruiter");
+    expect(school.googleUrl).toContain("Clay");
+  });
+
+  it("falls back to a keyword search, flagged, when the page is unknown", () => {
+    const [path] = warmPaths({ company: "Clay", title: "SWE" }, { schools: [], groups: [], employers: [] }, "nyc");
+    expect(path.scoped).toBe(false);
+    expect(path.linkedinUrl).toContain("/search/results/people/");
+    expect(companyPeopleUrl("a b", "x y")).toBe("https://www.linkedin.com/company/a%20b/people/?keywords=x+y");
+  });
+});
+
