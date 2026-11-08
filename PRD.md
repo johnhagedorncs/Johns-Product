@@ -1,4 +1,4 @@
-# PRD — Warm Apply
+# PRD — Warm Route
 
 **Author:** John  ·  **Date:** 2026-03-29  ·  **Version:** 0.1
 
@@ -6,7 +6,7 @@
 
 ## 1. Product Summary
 
-- **One-liner:** For **new-grad engineers in NYC** who lose roles to slow cold apply, **Warm Apply** is a **job + outreach copilot** that surfaces fresh postings, ranks warm contacts, and drafts messages — while you still apply the same day.
+- **One-liner:** For **new-grad engineers in NYC** who lose roles to slow cold apply, **Warm Route** is a **job + outreach copilot** that surfaces fresh postings, ranks warm contacts, and drafts messages — while you still apply the same day.
 - **TL;DR:** Plan A is a Claude Code skill (`/warm-apply`) that runs the loop from the terminal with LinkedIn in Chrome and a CSV tracker. Plan B (this repo prototype) mirrors the same loop in a web UI. Neither sends messages or auto-applies. Success in the first 2 weeks: messages sent, reply rate, chats booked, referrals — not lines of UI.
 
 ## 2. Target Customer
@@ -74,7 +74,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│  Warm Apply          Scan    Tracker    [ Paste job URL ........... ] [Go] │
+│  Warm Route          Scan    Tracker    [ Paste job URL ........... ] [Go] │
 ├─────────────────────────────────────────────────────────────────────────────┤
 │  HOME                                                                        │
 │  ┌─────────────────────────────────────────────────────────────────────┐   │

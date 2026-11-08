@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { FileText, Loader2, RotateCcw } from "lucide-react";
 import { extractResumePdf } from "@/app/actions/resume";
 import { Chip } from "@/components/chip";
-import { TARGET_LOCATIONS } from "@/lib/locations";
+import { locationLabel, normalizeLocation, TARGET_LOCATIONS } from "@/lib/locations";
 import { validatePdfUpload } from "@/lib/pdf-text";
 import {
   defaultSeekerPrefs,
@@ -23,10 +23,12 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const [showSkills, setShowSkills] = useState(false);
+  const [place, setPlace] = useState("");
 
   useEffect(() => {
     const next = parseSeekerPrefs(localStorage.getItem(SEEKER_STORAGE_KEY));
     setPrefs(next);
+    setPlace(locationLabel(next.locationId));
     onChange?.(next);
     // Load once. Later edits go through commit().
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -67,6 +69,12 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
     }
   }
 
+  function commitPlace(text: string) {
+    const locationId = normalizeLocation(text);
+    setPlace(locationLabel(locationId));
+    if (locationId !== prefs.locationId) commit({ ...prefs, locationId });
+  }
+
   const snapshot = resumeSnapshot(prefs);
 
   return (
@@ -105,18 +113,30 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
         <div className="flex flex-wrap items-center gap-2 justify-end">
           <label className="flex items-center gap-2 text-sm">
             <span className="sr-only">Location</span>
-            <select
+            <input
+              type="text"
+              list="location-options"
               aria-label="Location"
-              value={prefs.locationId}
-              onChange={(event) => commit({ ...prefs, locationId: event.target.value })}
-              className="rounded-full border border-foreground/20 bg-background/80 px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-            >
+              placeholder="Any city, e.g. Denver, CO"
+              value={place}
+              onChange={(event) => {
+                const text = event.target.value;
+                setPlace(text);
+                // A pick from the suggestion list commits at once; typing waits for Enter or blur.
+                if (TARGET_LOCATIONS.some((location) => location.label === text)) commitPlace(text);
+              }}
+              onBlur={() => commitPlace(place)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") commitPlace(place);
+              }}
+              onFocus={(event) => event.target.select()}
+              className="w-56 rounded-full border border-foreground/20 bg-background/80 px-3 py-1.5 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            />
+            <datalist id="location-options">
               {TARGET_LOCATIONS.map((location) => (
-                <option key={location.id} value={location.id}>
-                  {location.label}
-                </option>
+                <option key={location.id} value={location.label} />
               ))}
-            </select>
+            </datalist>
           </label>
           <label className="cursor-pointer rounded-full bg-brand px-4 py-1.5 text-sm font-medium transition-all duration-200 hover:opacity-85 focus-within:ring-2 focus-within:ring-ring">
             Upload PDF

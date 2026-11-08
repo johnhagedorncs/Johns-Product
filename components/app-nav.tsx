@@ -70,7 +70,7 @@ export function AppNav() {
           href={lastPath["/"] ?? "/"}
           className="font-heading text-2xl whitespace-nowrap font-light tracking-tight focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >
-          Warm Apply
+          Warm Route
         </Link>
         <nav className="flex items-center gap-5" aria-label="Main">
           {links.map((link) => {

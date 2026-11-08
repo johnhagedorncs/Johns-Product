@@ -1,6 +1,7 @@
 import { isEarlyCareer, matchesRole, plainDescription, stripHtml, tierLetter } from "@/lib/board-match";
 import { watchEntry } from "@/lib/sources/ats";
 import { fetchText, pool, type FetchLike } from "@/lib/sources/http";
+import { normalizeLocation } from "@/lib/locations";
 import type { Job } from "@/lib/types";
 
 /**
@@ -32,10 +33,18 @@ export const LINKEDIN_QUERIES = [
   "AI engineer",
 ];
 
+/** Preset metros use LinkedIn's own area names; a typed city is passed as written. */
+export function linkedInLocation(locationId: string): string {
+  const id = normalizeLocation(locationId);
+  return LOCATIONS[id] ?? id;
+}
+
+const PAGE_STARTS = [0, 10];
+
 export function linkedInSearchUrl(keywords: string, locationId: string, start = 0): string {
   const params = new URLSearchParams({
     keywords,
-    location: LOCATIONS[locationId] ?? LOCATIONS.nyc,
+    location: linkedInLocation(locationId),
     f_TPR: "r604800", // past week
     f_E: "2", // entry level
     start: String(start),
@@ -120,15 +129,17 @@ export async function scanLinkedIn(
   const seen = new Set<string>();
   const jobs: Job[] = [];
   let blocked = 0;
-  const pages = await pool(queries, 2, async (query) => {
+  // Two pages (10 cards each) per query, so any city fills the inbox.
+  const requests = queries.flatMap((query) => PAGE_STARTS.map((start) => ({ query, start })));
+  const pages = await pool(requests, 3, async ({ query, start }) => {
     try {
-      return parseLinkedInCards(await fetchText(linkedInSearchUrl(query, locationId), fetchImpl, 12000));
+      return parseLinkedInCards(await fetchText(linkedInSearchUrl(query, locationId, start), fetchImpl, 10000));
     } catch {
       blocked += 1;
       return [];
     }
   });
-  if (blocked === queries.length) throw new Error("LinkedIn did not answer (rate limited)");
+  if (blocked === requests.length) throw new Error("LinkedIn did not answer (rate limited)");
   for (const card of pages.flat()) {
     if (seen.has(card.linkedinId)) continue;
     seen.add(card.linkedinId);

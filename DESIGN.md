@@ -1,4 +1,4 @@
-# Warm Apply
+# Warm Route
 
 Editorial and calm, after Squarespace's Beacon template: white canvas, black ink, a light serif for headlines, and a few muted accents. Space and type do the work, not shadows or gradients. Dark mode is a header toggle and inverts to a black canvas.
 
@@ -7,7 +7,7 @@ Editorial and calm, after Squarespace's Beacon template: white canvas, black ink
   - Page titles `text-5xl sm:text-6xl`, job title `text-4xl sm:text-5xl`, section headings `text-3xl`, list item titles `text-2xl`
 - Body and UI: Inter, slight negative tracking
 - Scores and counts: JetBrains Mono
-- Wordmark: "Warm Apply" in Crimson Pro Light
+- Wordmark: "Warm Route" in Crimson Pro Light
 
 ## Colors
 - Background / cards: `#FFFFFF` (dark `#000000` / `#0D0D0D`)

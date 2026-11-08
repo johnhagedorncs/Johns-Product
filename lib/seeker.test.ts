@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { locationLabel, locationMatches } from "@/lib/locations";
+import { locationLabel, locationMatches, normalizeLocation } from "@/lib/locations";
+import { linkedInLocation } from "@/lib/sources/linkedin";
 import { getProfile } from "@/lib/profile";
 import {
   defaultSeekerPrefs,
@@ -16,9 +17,8 @@ describe("seeker prefs", () => {
   it("defaults when storage is empty or broken", () => {
     expect(parseSeekerPrefs(null)).toEqual(defaultSeekerPrefs());
     expect(parseSeekerPrefs("{")).toEqual(defaultSeekerPrefs());
-    expect(parseSeekerPrefs(JSON.stringify({ locationId: "mars" })).locationId).toBe(
-      "nyc"
-    );
+    expect(parseSeekerPrefs(JSON.stringify({ locationId: 42 })).locationId).toBe("nyc");
+    expect(parseSeekerPrefs(JSON.stringify({ locationId: "  " })).locationId).toBe("nyc");
   });
 
   it("keeps a valid location and trims oversized fields", () => {
@@ -58,12 +58,25 @@ describe("seeker prefs", () => {
   });
 
   it("matches each target city", () => {
-    expect(locationLabel("mars")).toBe("New York");
+    expect(locationLabel("")).toBe("New York");
     expect(locationMatches("Seattle, WA", "seattle")).toBe(true);
     expect(locationMatches("Boston, MA", "boston")).toBe(true);
     expect(locationMatches("Los Angeles, CA", "la")).toBe(true);
     expect(locationMatches("Chicago, IL", "chicago")).toBe(true);
     expect(locationMatches("New York, NY", "sf")).toBe(false);
+  });
+
+  it("accepts any typed city", () => {
+    expect(normalizeLocation("Denver, CO")).toBe("Denver, CO");
+    expect(normalizeLocation("  san francisco bay area ")).toBe("sf");
+    expect(normalizeLocation("NYC")).toBe("nyc");
+    expect(locationLabel("Denver, CO")).toBe("Denver, CO");
+    expect(locationMatches("Denver, Colorado, United States", "Denver, CO")).toBe(true);
+    expect(locationMatches("Austin, TX", "Denver, CO")).toBe(false);
+    expect(locationMatches("St. Louis, MO", "St. Louis")).toBe(true);
+    expect(normalizeSeeker({ locationId: "London" }).locationId).toBe("London");
+    expect(linkedInLocation("Denver, CO")).toBe("Denver, CO");
+    expect(linkedInLocation("nyc")).toBe("New York City Metropolitan Area");
   });
 
   it("keys tailored resumes by uploaded text", () => {

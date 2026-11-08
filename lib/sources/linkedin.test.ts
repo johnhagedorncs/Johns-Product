@@ -43,9 +43,7 @@ describe("LinkedIn search cards", () => {
     expect(url.searchParams.get("f_E")).toBe("2");
     expect(url.searchParams.get("start")).toBe("10");
     expect(new URL(linkedInSearchUrl("x", "remote")).searchParams.get("f_WT")).toBe("2");
-    expect(new URL(linkedInSearchUrl("x", "mars")).searchParams.get("location")).toBe(
-      "New York City Metropolitan Area"
-    );
+    expect(new URL(linkedInSearchUrl("x", "Denver, CO")).searchParams.get("location")).toBe("Denver, CO");
   });
 
   it("parses title, company, location, date, and a clean job URL", () => {

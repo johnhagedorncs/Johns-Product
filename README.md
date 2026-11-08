@@ -1,4 +1,4 @@
-# Warm Apply
+# Warm Route
 
 Find fresh new-grad roles, see how your resume actually matches each posting, and get a ranked warm path into the company — the same day the role goes up.
 

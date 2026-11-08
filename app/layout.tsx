@@ -20,7 +20,7 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Warm Apply",
+  title: "Warm Route",
   description: "Apply today, warm outreach second",
 };
 

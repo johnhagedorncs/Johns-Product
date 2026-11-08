@@ -1,4 +1,4 @@
-import { isLocationId, locationLabel } from "@/lib/locations";
+import { DEFAULT_LOCATION, locationLabel, normalizeLocation } from "@/lib/locations";
 import { savedResumeText, type Profile } from "@/lib/profile";
 import { gradYear, hookLabels, resumeHooks } from "@/lib/resume-hooks";
 import { extractSkills } from "@/lib/skills";
@@ -15,7 +15,7 @@ export type SeekerPrefs = {
 export function defaultSeekerPrefs(): SeekerPrefs {
   return {
     name: "",
-    locationId: "nyc",
+    locationId: DEFAULT_LOCATION,
     resumeText: "",
     resumeFileName: "",
   };
@@ -27,9 +27,7 @@ export function normalizeSeeker(
   const fallback = defaultSeekerPrefs();
   return {
     name: typeof input?.name === "string" ? input.name.slice(0, 80) : fallback.name,
-    locationId: isLocationId(input?.locationId)
-      ? input.locationId
-      : fallback.locationId,
+    locationId: normalizeLocation(input?.locationId ?? fallback.locationId),
     resumeText:
       typeof input?.resumeText === "string"
         ? input.resumeText.slice(0, 20000)
@@ -55,7 +53,7 @@ export function profileForSeeker(base: Profile, prefs: SeekerPrefs): Profile {
   const location = locationLabel(seeker.locationId);
   const custom = Boolean(seeker.name.trim() || seeker.resumeText.trim());
   if (!custom) {
-    if (seeker.locationId === "nyc") return base;
+    if (seeker.locationId === DEFAULT_LOCATION) return base;
     return { ...base, location };
   }
   const name = seeker.name.trim() || base.name;
