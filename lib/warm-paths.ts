@@ -64,31 +64,29 @@ export type PeopleFilters = {
   /** Current company name */
   company: string;
   title?: string;
-  school?: string;
+  /** Exact phrases, e.g. (UCSB OR "UC Santa Barbara") */
   keywords?: string;
 };
 
 /**
  * Logged-in LinkedIn people search with real filters. The company People tab
  * drops ?keywords=, so it always landed on the bare People page; the search
- * page honors company, title, and school.
+ * page honors company, title, and exact-phrase keywords.
  */
 export function linkedInPeopleSearchUrl(filters: PeopleFilters): string {
   const params = new URLSearchParams({ company: filters.company });
   if (filters.title) params.set("title", filters.title);
-  if (filters.school) params.set("school", filters.school);
   if (filters.keywords) params.set("keywords", filters.keywords);
   params.set("origin", "FACETED_SEARCH");
   return `https://www.linkedin.com/search/results/people/?${params.toString()}`;
 }
 
 /**
- * The most formal alias, commas dropped — "University of California, Santa
- * Barbara" is what LinkedIn's school field holds.
+ * LinkedIn's school filter is fuzzy ("University of California" pulls in
+ * Berkeley and USC), so schools search as exact phrases, every alias OR'd.
  */
-function longest(terms: string[]): string {
-  const best = terms.reduce((top, term) => (term.length > top.length ? term : top), terms[0] ?? "");
-  return best.replace(/\s*,\s*/g, " ");
+function noCommas(term: string): string {
+  return term.replace(/\s*,\s*/g, " ");
 }
 
 function path(
@@ -131,14 +129,14 @@ export function warmPaths(
     const aliases = hookAliases(group);
     paths.push(
       path("group", group, `${group} at ${company}`, `Shared group — the warmest cold note you can send`, 4,
-        { company: filter, keywords: quote(aliases[0]) }, anyOf(aliases), { company: names, tie: aliases })
+        { company: filter, keywords: anyOf(aliases.map(noCommas)) }, anyOf(aliases), { company: names, tie: aliases })
     );
   }
   for (const school of hooks.schools) {
     const aliases = hookAliases(school);
     paths.push(
       path("school", school, `${school} alumni at ${company}`, `Same school — lead with it in the first line`, 3,
-        { company: filter, school: longest(aliases) }, anyOf(aliases), { company: names, tie: aliases })
+        { company: filter, keywords: anyOf(aliases.map(noCommas)) }, anyOf(aliases), { company: names, tie: aliases })
     );
   }
   for (const employer of hooks.employers) {

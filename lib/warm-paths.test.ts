@@ -37,10 +37,10 @@ describe("warmPaths", () => {
     expect(byKind("function").get("company")).toBe("BeaconFire");
     expect(byKind("function").get("title")).toBe("software engineer");
     expect(byKind("recruiter").get("title")).toBe("recruiter");
-    expect(byKind("school").get("school")).toBe("University of California Santa Barbara");
-    expect(byKind("school").get("keywords")).toBeNull();
+    expect(byKind("school").get("keywords")).toBe('(UCSB OR "UC Santa Barbara" OR "University of California Santa Barbara")');
+    expect(byKind("school").get("school")).toBeNull();
     expect(byKind("employer").get("keywords")).toBe("BrightAI");
-    expect(byKind("group").get("keywords")).toBe('"Zeta Beta Tau"');
+    expect(byKind("group").get("keywords")).toBe('("Zeta Beta Tau" OR ZBT)');
     expect(paths.find((path) => path.kind === "employer")!.checkQuery).toBe('site:linkedin.com/in BeaconFire BrightAI');
   });
 
