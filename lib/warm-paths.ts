@@ -10,14 +10,16 @@ export type WarmPath = {
   why: string;
   /** Rank points: relationship (group 4, school 3, employer 2) or role relevance (function 4, recruiter 3) */
   points: number;
-  linkedinUrl: string;
-  googleUrl: string;
-  /** True when linkedinUrl searches the company's own employee list; false = keyword search that can match names */
-  scoped: boolean;
+  /** LinkedIn people search filtered to exactly this path: current company plus title, school, or keyword */
+  url: string;
+  /** Public-web query used to confirm at least one such person exists */
+  checkQuery: string;
+  /** Set when the existence check could not run (no AI key or it failed), so the tie may be empty */
+  unverified?: boolean;
 };
 
-/** LinkedIn geo IDs for the people-search location filter. */
-const GEO: Record<string, string> = { nyc: "90000070" };
+/** Paths that only make sense if someone actually shares the tie. */
+export const NEEDS_PROOF = new Set<WarmPathKind>(["school", "group", "employer"]);
 
 const FUNCTIONS: Array<[RegExp, string, string]> = [
   [/forward[\s-]deployed/i, "forward deployed", "Forward deployed engineers"],
@@ -40,6 +42,13 @@ export function searchCompanyName(company: string): string {
   return company.replace(/\s*\(.*?\)\s*/g, " ").replace(/\s*\/.*$/, "").trim();
 }
 
+/** "BeaconFire Inc." → "BeaconFire": LinkedIn's company filter matches the name people list on profiles. */
+export function companyFilterName(company: string): string {
+  return searchCompanyName(company)
+    .replace(/,?\s+(inc|llc|l\.l\.c|corp|corporation|co|ltd|limited|plc|gmbh)\.?$/i, "")
+    .trim();
+}
+
 function quote(term: string): string {
   return term.includes(" ") || term.includes(",") ? `"${term}"` : term;
 }
@@ -49,29 +58,36 @@ function anyOf(terms: string[]): string {
   return quoted.length === 1 ? quoted[0] : `(${quoted.join(" OR ")})`;
 }
 
-export function linkedInPeopleUrl(keywords: string, locationId?: string): string {
-  const params = new URLSearchParams({ keywords, origin: "GLOBAL_SEARCH_HEADER" });
-  const geo = locationId ? GEO[locationId] : undefined;
-  if (geo) params.set("geoUrn", JSON.stringify([geo]));
+export type PeopleFilters = {
+  /** Current company name */
+  company: string;
+  title?: string;
+  school?: string;
+  keywords?: string;
+};
+
+/**
+ * Logged-in LinkedIn people search with real filters. The company People tab
+ * drops ?keywords=, so it always landed on the bare People page; the search
+ * page honors company, title, and school.
+ */
+export function linkedInPeopleSearchUrl(filters: PeopleFilters): string {
+  const params = new URLSearchParams({ company: filters.company });
+  if (filters.title) params.set("title", filters.title);
+  if (filters.school) params.set("school", filters.school);
+  if (filters.keywords) params.set("keywords", filters.keywords);
+  params.set("origin", "FACETED_SEARCH");
   return `https://www.linkedin.com/search/results/people/?${params.toString()}`;
 }
 
-/** The company's People tab, filtered — lists only people who work there now. */
-export function companyPeopleUrl(slug: string, keywords: string): string {
-  return `https://www.linkedin.com/company/${encodeURIComponent(slug)}/people/?${new URLSearchParams({ keywords }).toString()}`;
+/**
+ * The most formal alias, commas dropped — "University of California, Santa
+ * Barbara" is what LinkedIn's school field holds.
+ */
+function longest(terms: string[]): string {
+  const best = terms.reduce((top, term) => (term.length > top.length ? term : top), terms[0] ?? "");
+  return best.replace(/\s*,\s*/g, " ");
 }
-
-export function googleProfilesUrl(query: string): string {
-  return `https://www.google.com/search?${new URLSearchParams({ q: `site:linkedin.com/in ${query}` }).toString()}`;
-}
-
-type Search = {
-  /** Full keyword search, company name included */
-  keywords: string;
-  /** What to type into the company's People tab search box */
-  employeeKeywords: string;
-  locationId?: string;
-};
 
 function path(
   kind: WarmPathKind,
@@ -79,8 +95,8 @@ function path(
   label: string,
   why: string,
   points: number,
-  search: Search,
-  slug?: string
+  filters: PeopleFilters,
+  tie: string
 ): WarmPath {
   return {
     id: `${kind}:${id}`,
@@ -88,80 +104,68 @@ function path(
     label,
     why,
     points,
-    linkedinUrl: slug
-      ? companyPeopleUrl(slug, search.employeeKeywords)
-      : linkedInPeopleUrl(search.keywords, search.locationId),
-    googleUrl: googleProfilesUrl(search.keywords),
-    scoped: Boolean(slug),
+    url: linkedInPeopleSearchUrl(filters),
+    checkQuery: `site:linkedin.com/in ${quote(filters.company)} ${tie}`,
   };
 }
 
 /**
- * The most formal alias, commas dropped — LinkedIn's People-tab search stops
- * at a comma, so "University of California, Santa Barbara" would search
- * every UC campus.
- */
-function longest(terms: string[]): string {
-  const best = terms.reduce((top, term) => (term.length > top.length ? term : top), terms[0] ?? "");
-  return best.replace(/\s*,\s*/g, " ");
-}
-
-/**
  * Ranked people searches for a role: shared school, group, and past employer
- * first (anywhere — warm ties travel), then same-function and recruiting in
- * the target city. You open each search in your own logged-in browser.
+ * first, then same-function and recruiting. Each opens in your own
+ * logged-in LinkedIn.
  */
 export function warmPaths(
-  job: Pick<Job, "company" | "title" | "companyLinkedIn">,
-  hooks: ResumeHooks,
-  locationId: string
+  job: Pick<Job, "company" | "title">,
+  hooks: ResumeHooks
 ): WarmPath[] {
-  const slug = job.companyLinkedIn || undefined;
   const company = searchCompanyName(job.company);
-  const co = quote(company);
+  const filter = companyFilterName(job.company) || company;
   const paths: WarmPath[] = [];
 
   for (const group of hooks.groups) {
+    const aliases = hookAliases(group);
     paths.push(
       path("group", group, `${group} at ${company}`, `Shared group — the warmest cold note you can send`, 4,
-        { keywords: `${co} ${anyOf(hookAliases(group))}`, employeeKeywords: hookAliases(group)[0] }, slug)
+        { company: filter, keywords: quote(aliases[0]) }, anyOf(aliases))
     );
   }
   for (const school of hooks.schools) {
+    const aliases = hookAliases(school);
     paths.push(
       path("school", school, `${school} alumni at ${company}`, `Same school — lead with it in the first line`, 3,
-        { keywords: `${co} ${anyOf(hookAliases(school))}`, employeeKeywords: longest(hookAliases(school)) }, slug)
+        { company: filter, school: longest(aliases) }, anyOf(aliases))
     );
   }
   for (const employer of hooks.employers) {
-    if (employer.toLowerCase() === company.toLowerCase()) continue;
+    if (employer.toLowerCase() === filter.toLowerCase() || employer.toLowerCase() === company.toLowerCase()) continue;
     paths.push(
       path("employer", employer, `Ex-${employer} at ${company}`, `Shared employer — ask how they made the jump`, 2,
-        { keywords: `${co} ${quote(employer)}`, employeeKeywords: employer }, slug)
+        { company: filter, keywords: quote(employer) }, quote(employer))
     );
   }
 
   const fn = roleFunction(job.title);
   paths.push(
     path("function", fn.keyword, `${fn.label} at ${company}`, `Same function — can speak to the team and refer`, 4,
-      { keywords: `${co} ${quote(fn.keyword)}`, employeeKeywords: fn.keyword, locationId }, slug)
+      { company: filter, title: fn.keyword }, quote(fn.keyword))
   );
   paths.push(
     path("recruiter", "recruiting", `Recruiters at ${company}`, `Recruiting — can confirm the req and route your application`, 3,
-      {
-        keywords: `${co} ${anyOf(["university recruiter", "technical recruiter", "talent acquisition"])}`,
-        employeeKeywords: "recruiter",
-        locationId,
-      }, slug)
+      { company: filter, title: "recruiter" }, anyOf(["recruiter", "talent acquisition"]))
   );
 
   return paths.sort((a, b) => b.points - a.points);
 }
 
-/** Drop a path only when a search confirmed it has no LinkedIn profiles. Unknown stays. */
-export function pathsWithLinkedInResults(
-  paths: WarmPath[],
-  hasResults: Record<string, boolean>
-): WarmPath[] {
-  return paths.filter((path) => hasResults[path.id] !== false);
+/**
+ * Show a school, group, or past-employer path only when a search found at
+ * least one real person behind it. Team and recruiter paths always show.
+ */
+export function pathsWithPeople(paths: WarmPath[], found: Record<string, boolean>): WarmPath[] {
+  return paths.filter((path) => !NEEDS_PROOF.has(path.kind) || found[path.id] === true);
+}
+
+/** When nothing could be checked, keep every path but flag the shared ties as unverified. */
+export function uncheckedPaths(paths: WarmPath[]): WarmPath[] {
+  return paths.map((path) => (NEEDS_PROOF.has(path.kind) ? { ...path, unverified: true } : path));
 }

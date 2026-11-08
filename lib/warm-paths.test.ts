@@ -1,19 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
-  companyPeopleUrl,
-  googleProfilesUrl,
-  linkedInPeopleUrl,
-  pathsWithLinkedInResults,
+  companyFilterName,
+  linkedInPeopleSearchUrl,
+  pathsWithPeople,
   roleFunction,
   searchCompanyName,
   warmPaths,
 } from "@/lib/warm-paths";
 
 const hooks = { schools: ["UCSB"], groups: ["Zeta Beta Tau"], employers: ["BrightAI", "Anthropic"] };
+const none = { schools: [], groups: [], employers: [] };
+
+function params(url: string) {
+  return new URL(url).searchParams;
+}
 
 describe("warmPaths", () => {
   it("ranks group, school, function, recruiter, then past employers", () => {
-    const paths = warmPaths({ company: "Anthropic", title: "Forward Deployed Engineer" }, hooks, "nyc");
+    const paths = warmPaths({ company: "Anthropic", title: "Forward Deployed Engineer" }, hooks);
     expect(paths.map((path) => [path.kind, path.points])).toEqual([
       ["group", 4],
       ["function", 4],
@@ -24,32 +28,35 @@ describe("warmPaths", () => {
     expect(paths.find((path) => path.kind === "employer")?.label).toBe("Ex-BrightAI at Anthropic");
   });
 
-  it("searches every way people write the school, anywhere, and the team in the target city", () => {
-    const paths = warmPaths({ company: "Anthropic", title: "Software Engineer" }, hooks, "nyc");
-    const school = new URL(paths.find((path) => path.kind === "school")!.linkedinUrl);
-    expect(school.searchParams.get("keywords")).toBe(
-      'Anthropic (UCSB OR "UC Santa Barbara" OR "University of California, Santa Barbara")'
-    );
-    expect(school.searchParams.get("geoUrn")).toBeNull();
-    const team = new URL(paths.find((path) => path.kind === "function")!.linkedinUrl);
-    expect(team.searchParams.get("keywords")).toBe('Anthropic "software engineer"');
-    expect(team.searchParams.get("geoUrn")).toBe('["90000070"]');
-    const group = new URL(paths[0].linkedinUrl);
-    expect(group.searchParams.get("keywords")).toBe('Anthropic ("Zeta Beta Tau" OR ZBT)');
+  it("links each path to a people search filtered to exactly that group", () => {
+    const paths = warmPaths({ company: "BeaconFire Inc.", title: "Software Engineer" }, hooks);
+    const byKind = (kind: string) => params(paths.find((path) => path.kind === kind)!.url);
+
+    expect(paths[0].url.startsWith("https://www.linkedin.com/search/results/people/?")).toBe(true);
+    expect(byKind("function").get("company")).toBe("BeaconFire");
+    expect(byKind("function").get("title")).toBe("software engineer");
+    expect(byKind("recruiter").get("title")).toBe("recruiter");
+    expect(byKind("school").get("school")).toBe("University of California Santa Barbara");
+    expect(byKind("school").get("keywords")).toBeNull();
+    expect(byKind("employer").get("keywords")).toBe("BrightAI");
+    expect(byKind("group").get("keywords")).toBe('"Zeta Beta Tau"');
+    expect(paths.find((path) => path.kind === "employer")!.checkQuery).toBe('site:linkedin.com/in BeaconFire BrightAI');
   });
 
   it("still gives team and recruiter paths with no resume hooks", () => {
-    const paths = warmPaths({ company: "Google (NYC)", title: "APM" }, { schools: [], groups: [], employers: [] }, "sf");
+    const paths = warmPaths({ company: "Google (NYC)", title: "APM" }, none);
     expect(paths.map((path) => path.kind)).toEqual(["function", "recruiter"]);
     expect(paths[0].label).toBe("Product managers at Google");
+  });
+});
+
+describe("pathsWithPeople", () => {
+  it("hides a shared tie unless someone was found, and always keeps team and recruiter", () => {
+    const paths = warmPaths({ company: "BeaconFire Inc.", title: "SWE" }, { schools: ["UCSB"], groups: [], employers: ["BrightAI"] });
+    expect(pathsWithPeople(paths, {}).map((path) => path.kind)).toEqual(["function", "recruiter"]);
     expect(
-      pathsWithLinkedInResults(paths, { [`${paths[0].id}`]: false }).map((path) => path.kind)
-    ).toEqual(["recruiter"]);
-    expect(pathsWithLinkedInResults(paths, {}).map((path) => path.kind)).toEqual([
-      "function",
-      "recruiter",
-    ]);
-    expect(new URL(paths[0].linkedinUrl).searchParams.get("geoUrn")).toBeNull();
+      pathsWithPeople(paths, { "school:UCSB": true, "employer:BrightAI": false }).map((path) => path.kind)
+    ).toEqual(["function", "school", "recruiter"]);
   });
 });
 
@@ -65,33 +72,9 @@ describe("search helpers", () => {
 
   it("cleans company names and builds search links", () => {
     expect(searchCompanyName("Amazon / AWS (NYC)")).toBe("Amazon");
-    expect(linkedInPeopleUrl("x")).toContain("linkedin.com/search/results/people/");
-    expect(new URL(googleProfilesUrl('"Ramp" UCSB')).searchParams.get("q")).toBe('site:linkedin.com/in "Ramp" UCSB');
+    expect(companyFilterName("BeaconFire Inc.")).toBe("BeaconFire");
+    expect(companyFilterName("Acme, LLC")).toBe("Acme");
+    expect(companyFilterName("Two Sigma")).toBe("Two Sigma");
+    expect(params(linkedInPeopleSearchUrl({ company: "Ramp", title: "recruiter" })).get("origin")).toBe("FACETED_SEARCH");
   });
 });
-
-describe("company-scoped searches", () => {
-  it("searches the company's own employees when its LinkedIn page is known", () => {
-    const paths = warmPaths(
-      { company: "Clay", title: "GTM Engineer", companyLinkedIn: "grow-with-clay" },
-      { schools: ["UCSB"], groups: [], employers: ["BrightAI"] },
-      "nyc"
-    );
-    const school = paths.find((path) => path.kind === "school")!;
-    expect(school.scoped).toBe(true);
-    expect(school.linkedinUrl).toBe(
-      "https://www.linkedin.com/company/grow-with-clay/people/?keywords=University+of+California+Santa+Barbara"
-    );
-    expect(new URL(paths.find((path) => path.kind === "employer")!.linkedinUrl).searchParams.get("keywords")).toBe("BrightAI");
-    expect(new URL(paths.find((path) => path.kind === "recruiter")!.linkedinUrl).searchParams.get("keywords")).toBe("recruiter");
-    expect(school.googleUrl).toContain("Clay");
-  });
-
-  it("falls back to a keyword search, flagged, when the page is unknown", () => {
-    const [path] = warmPaths({ company: "Clay", title: "SWE" }, { schools: [], groups: [], employers: [] }, "nyc");
-    expect(path.scoped).toBe(false);
-    expect(path.linkedinUrl).toContain("/search/results/people/");
-    expect(companyPeopleUrl("a b", "x y")).toBe("https://www.linkedin.com/company/a%20b/people/?keywords=x+y");
-  });
-});
-

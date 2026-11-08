@@ -17,9 +17,8 @@ const path: WarmPath = {
   label: "UCSB alumni at Clay",
   why: "Same school",
   points: 3,
-  linkedinUrl: "https://www.linkedin.com/company/grow-with-clay/people/?keywords=x",
-  googleUrl: "https://www.google.com/search?q=x",
-  scoped: true,
+  url: "https://www.linkedin.com/search/results/people/?company=Clay&school=x",
+  checkQuery: "site:linkedin.com/in Clay UCSB",
 };
 
 describe("job session store", () => {

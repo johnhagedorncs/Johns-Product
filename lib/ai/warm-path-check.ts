@@ -3,60 +3,60 @@ import "server-only";
 import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
 import { getOpenAIClient, hasOpenAIConfig, resolveModel } from "@/lib/ai/client";
-import { pathsWithLinkedInResults, type WarmPath } from "@/lib/warm-paths";
+import { NEEDS_PROOF, pathsWithPeople, uncheckedPaths, type WarmPath } from "@/lib/warm-paths";
 
-const HitSchema = z.object({
-  hits: z.array(z.object({ id: z.string(), hasResults: z.boolean() })),
+const ProofSchema = z.object({
+  proofs: z.array(z.object({ id: z.string(), profileUrl: z.string() })),
 });
 
 const memory = new Map<string, boolean>();
 
 function cacheKey(path: WarmPath): string {
-  return `v2|${path.googleUrl}`;
+  return `v3|${path.checkQuery}`;
 }
 
-function searchQuery(path: WarmPath): string {
-  return new URL(path.googleUrl).searchParams.get("q") ?? path.label;
-}
+const PROFILE_URL = /^https?:\/\/([a-z]{2,3}\.)?(www\.)?linkedin\.com\/in\/[^/?#\s]+/i;
 
 export function warmPathCheckPrompt(paths: WarmPath[]): string {
-  const lines = paths.map((path) => `- id: ${path.id}\n  search: ${searchQuery(path)}`).join("\n");
-  return `For each people search below, run a web search for public LinkedIn profiles (linkedin.com/in).
+  const lines = paths
+    .map((path) => `- id: ${path.id}\n  looking for: ${path.label}\n  search: ${path.checkQuery}`)
+    .join("\n");
+  return `For each people search below, run a web search for public LinkedIn profiles.
 
 ${lines}
 
-Return a hit only for a search you are sure has zero matching profiles, with hasResults false. Omit every search that has at least one matching profile, and omit any search you are not sure about.`;
+For each id, return profileUrl: the linkedin.com/in/... URL of ONE real person who currently works at the company AND matches "looking for" (went to that school, belongs to that group, or used to work at that employer), copied exactly from a search result. If you did not find such a person, return an empty string. Never guess or invent a URL.`;
 }
 
-const CHECKED_KINDS = new Set<WarmPath["kind"]>(["employer", "group"]);
-
+/**
+ * Keep a school, group, or past-employer path only when web search turns up a
+ * real profile behind it. Without a model key nothing can be checked, so
+ * they show flagged as unverified.
+ */
 export async function warmPathsThatHit(paths: WarmPath[]): Promise<WarmPath[]> {
-  const checking = paths.filter((path) => CHECKED_KINDS.has(path.kind));
-  const kept = paths.filter((path) => !CHECKED_KINDS.has(path.kind));
-  if (checking.length === 0 || !hasOpenAIConfig()) return paths;
+  const checking = paths.filter((path) => NEEDS_PROOF.has(path.kind));
+  if (checking.length === 0) return paths;
+  if (!hasOpenAIConfig()) return uncheckedPaths(paths);
 
   const pending = checking.filter((path) => !memory.has(cacheKey(path)));
   if (pending.length > 0) {
     const openai = getOpenAIClient();
     const response = await openai.responses.parse({
       model: resolveModel("fast"),
-      tools: [{ type: "web_search", search_context_size: "low" }],
+      tools: [{ type: "web_search", search_context_size: "medium" }],
       input: warmPathCheckPrompt(pending),
-      text: { format: zodTextFormat(HitSchema, "warm_path_hits") },
+      text: { format: zodTextFormat(ProofSchema, "warm_path_proofs") },
     });
-    const seen = new Set<string>();
-    for (const hit of response.output_parsed?.hits ?? []) {
-      const path = checking.find((item) => item.id === hit.id);
-      if (!path || seen.has(path.id)) continue;
-      seen.add(path.id);
-      memory.set(cacheKey(path), hit.hasResults);
+    const proofs = new Map<string, string>();
+    for (const proof of response.output_parsed?.proofs ?? []) {
+      if (!proofs.has(proof.id)) proofs.set(proof.id, proof.profileUrl.trim());
+    }
+    for (const path of pending) {
+      memory.set(cacheKey(path), PROFILE_URL.test(proofs.get(path.id) ?? ""));
     }
   }
 
-  const flags: Record<string, boolean> = {};
-  for (const path of checking) {
-    const hit = memory.get(cacheKey(path));
-    if (hit !== undefined) flags[path.id] = hit;
-  }
-  return [...pathsWithLinkedInResults(checking, flags), ...kept].sort((a, b) => b.points - a.points);
+  const found: Record<string, boolean> = {};
+  for (const path of checking) found[path.id] = memory.get(cacheKey(path)) === true;
+  return pathsWithPeople(paths, found);
 }

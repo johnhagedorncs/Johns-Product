@@ -3,18 +3,16 @@
 import { useEffect, useState } from "react";
 import { ExternalLink, Loader2, Search } from "lucide-react";
 import { findPeopleForJob, visibleWarmPaths } from "@/app/actions/ai";
-import { linkedInCompanySlug } from "@/app/actions/jobs";
 import { Chip } from "@/components/chip";
 import { Button } from "@/components/ui/button";
 import { initials } from "@/lib/draft-text";
-import { findInboxJob, upsertInboxJob } from "@/lib/inbox-store";
 import { readWarmPaths, saveWarmPaths, warmPathsKey } from "@/lib/job-session";
 import { readPeopleCache, writePeopleCache } from "@/lib/people-cache";
 import { mergeRolePeople, peopleForRole, type RolePerson } from "@/lib/people";
 import { resumeHooks } from "@/lib/resume-hooks";
 import { effectiveResume, textHash, type SeekerPrefs } from "@/lib/seeker";
 import { getSeedTrackerRows, mergeTrackerRows, parseTrackerOverrides, TRACKER_STORAGE_KEY } from "@/lib/tracker";
-import { warmPaths, type WarmPath } from "@/lib/warm-paths";
+import { uncheckedPaths, warmPaths, type WarmPath } from "@/lib/warm-paths";
 import type { Job } from "@/lib/types";
 
 export function WarmPathsPanel({ job, seeker }: { job: Job; seeker: SeekerPrefs }) {
@@ -46,16 +44,8 @@ export function WarmPathsPanel({ job, seeker }: { job: Job; seeker: SeekerPrefs 
     }
     setVisible(null);
     async function load() {
-      // Searching inside the company's own People tab needs its LinkedIn slug;
-      // without it a keyword search matches people *named* after the company.
-      let slug = job.companyLinkedIn;
-      if (!slug) {
-        slug = (await linkedInCompanySlug(job.company).catch(() => null)) ?? undefined;
-        const stored = slug ? findInboxJob(job.id) : null;
-        if (stored) upsertInboxJob({ ...stored, companyLinkedIn: slug });
-      }
-      const current = warmPaths({ ...job, companyLinkedIn: slug }, resumeHooks(resume), seeker.locationId);
-      const next = await visibleWarmPaths(current).catch(() => current);
+      const current = warmPaths({ company: job.company, title: job.title }, resumeHooks(resume));
+      const next = await visibleWarmPaths(current).catch(() => uncheckedPaths(current));
       saveWarmPaths(cacheKey, next);
       if (!cancelled) setVisible(next);
     }
@@ -63,7 +53,7 @@ export function WarmPathsPanel({ job, seeker }: { job: Job; seeker: SeekerPrefs 
     return () => {
       cancelled = true;
     };
-  }, [job.id, job.company, job.title, job.companyLinkedIn, resume, seeker.locationId]);
+  }, [job.id, job.company, job.title, resume, seeker.locationId]);
 
   async function searchWeb() {
     setSearching(true);
@@ -89,16 +79,16 @@ export function WarmPathsPanel({ job, seeker }: { job: Job; seeker: SeekerPrefs 
     <article className="rounded-2xl border border-border bg-card p-6">
       <h2 className="text-3xl">Warm paths into {job.company}</h2>
       <p className="mt-1 text-sm text-muted-foreground">
-        Ranked searches. Each opens in your logged-in LinkedIn — pick 2–3 people, then draft below.
+        Ranked LinkedIn searches, each filtered to exactly that group. Pick 2–3 people, then draft below.
       </p>
       {visible === null ? (
         <p className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground">
           <Loader2 className="size-3.5 animate-spin" />
-          Checking which searches have people…
+          Checking which connections actually work there…
         </p>
       ) : visible.length === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">
-          None of these searches returned LinkedIn profiles.
+          No warm paths found for this company.
         </p>
       ) : (
       <ol className="mt-4 flex flex-col gap-3">
@@ -110,29 +100,17 @@ export function WarmPathsPanel({ job, seeker }: { job: Job; seeker: SeekerPrefs 
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">{path.label}</p>
               <p className="text-xs text-muted-foreground">{path.why}</p>
-              {!path.scoped ? (
-                <p className="text-xs text-warning">
-                  Keyword search — may include people named {job.company}. Filter by Current company on LinkedIn.
-                </p>
+              {path.unverified ? (
+                <p className="text-xs text-warning">Not verified. The search may come back empty.</p>
               ) : null}
-              <div className="mt-1 flex flex-wrap gap-3 text-sm">
-                <a
-                  href={path.linkedinUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 font-medium text-primary"
-                >
-                  {path.scoped ? `${job.company} employees` : "LinkedIn"} <ExternalLink className="size-3" />
-                </a>
-                <a
-                  href={path.googleUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground"
-                >
-                  Google <ExternalLink className="size-3" />
-                </a>
-              </div>
+              <a
+                href={path.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1 text-sm font-medium text-foreground transition-opacity hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              >
+                See them on LinkedIn <ExternalLink className="size-3.5" />
+              </a>
             </div>
             <span className="font-mono text-xs text-muted-foreground" title="Rank points">
               {path.points}

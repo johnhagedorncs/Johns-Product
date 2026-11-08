@@ -1,5 +1,6 @@
 "use server";
 
+import { uncheckedPaths } from "@/lib/warm-paths";
 import { hasOpenAIConfig } from "@/lib/ai/client";
 import { findConnectablePeople } from "@/lib/ai/find-people";
 import { warmPathsThatHit } from "@/lib/ai/warm-path-check";
@@ -21,7 +22,8 @@ export async function visibleWarmPaths(paths: WarmPath[]): Promise<WarmPath[]> {
   try {
     return await warmPathsThatHit(paths);
   } catch {
-    return paths;
+    // The check failed (e.g. expired key): show ties, flagged as unverified.
+    return uncheckedPaths(paths);
   }
 }
 
