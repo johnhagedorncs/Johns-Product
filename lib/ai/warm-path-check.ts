@@ -71,31 +71,28 @@ export async function warmPathsThatHit(paths: WarmPath[]): Promise<WarmPath[]> {
   if (!hasOpenAIConfig()) return uncheckedPaths(paths);
 
   const pending = checking.filter((path) => !memory.has(cacheKey(path)));
-  if (pending.length > 0) {
-    const openai = getOpenAIClient();
-    const response = await openai.responses.parse({
-      model: resolveModel("fast"),
-      tools: [{ type: "web_search", search_context_size: "medium" }],
-      include: ["web_search_call.action.sources"],
-      input: warmPathCheckPrompt(pending),
-      text: { format: zodTextFormat(ProofSchema, "warm_path_proofs") },
-    });
-    const searched = searchedProfiles(response as SearchResponse);
-    const proofs = new Map<string, { profileUrl: string; quote: string }>();
-    for (const proof of response.output_parsed?.proofs ?? []) {
-      if (!proofs.has(proof.id)) proofs.set(proof.id, proof);
-    }
-    for (const path of pending) {
-      const proof = proofs.get(path.id);
+  // One search per tie: batching them gave each only a couple of results.
+  await Promise.all(
+    pending.map(async (path) => {
+      const openai = getOpenAIClient();
+      const response = await openai.responses.parse({
+        model: resolveModel("fast"),
+        tools: [{ type: "web_search", search_context_size: "high" }],
+        include: ["web_search_call.action.sources"],
+        input: warmPathCheckPrompt([path]),
+        text: { format: zodTextFormat(ProofSchema, "warm_path_proofs") },
+      });
+      const searched = searchedProfiles(response as SearchResponse);
+      const proof = response.output_parsed?.proofs?.find((item) => item.id === path.id) ?? response.output_parsed?.proofs?.[0];
       const slug = proof ? profileSlug(proof.profileUrl) : null;
       const inSearch = Boolean(slug && searched.has(slug));
       const quoteOk = Boolean(proof && quoteProves(proof.quote, path.proofTerms));
-      memory.set(cacheKey(path), Boolean(slug) && inSearch && quoteOk);
+      memory.set(cacheKey(path), inSearch && quoteOk);
       console.info(
         `[warm-path-check] ${path.id} slug=${slug ?? "-"} inSearch=${inSearch} quoteOk=${quoteOk} searched=${searched.size} quote=${JSON.stringify((proof?.quote ?? "").slice(0, 120))}`
       );
-    }
-  }
+    })
+  );
 
   const found: Record<string, boolean> = {};
   for (const path of checking) found[path.id] = memory.get(cacheKey(path)) === true;
