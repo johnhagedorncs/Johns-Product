@@ -21,7 +21,8 @@ function failure(err: unknown, fallback: string): string {
 export async function visibleWarmPaths(paths: WarmPath[]): Promise<WarmPath[]> {
   try {
     return await warmPathsThatHit(paths);
-  } catch {
+  } catch (err) {
+    console.error(`[warm-path-check] failed: ${err instanceof Error ? err.message : String(err)}`);
     // The check failed (e.g. expired key): show ties, flagged as unverified.
     return uncheckedPaths(paths);
   }

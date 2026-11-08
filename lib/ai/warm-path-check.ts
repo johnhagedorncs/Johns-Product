@@ -3,13 +3,14 @@ import "server-only";
 import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
 import { getOpenAIClient, hasOpenAIConfig, resolveModel } from "@/lib/ai/client";
-import { NEEDS_PROOF, pathsWithPeople, quoteProves, uncheckedPaths, type WarmPath } from "@/lib/warm-paths";
+import { NEEDS_PROOF, quoteProves, uncheckedPaths, type WarmPath } from "@/lib/warm-paths";
 
 const ProofSchema = z.object({
   proofs: z.array(z.object({ id: z.string(), profileUrl: z.string(), quote: z.string() })),
 });
 
 const memory = new Map<string, boolean>();
+const CHECK_TIMEOUT_MS = 25_000;
 
 function cacheKey(path: WarmPath): string {
   return `v4|${path.checkQuery}`;
@@ -71,27 +72,38 @@ export async function warmPathsThatHit(paths: WarmPath[]): Promise<WarmPath[]> {
   if (!hasOpenAIConfig()) return uncheckedPaths(paths);
 
   const pending = checking.filter((path) => !memory.has(cacheKey(path)));
-  // One search per tie: batching them gave each only a couple of results.
+  const failed = new Set<string>();
+  // One search per tie (batching gave each only a couple of results), each
+  // capped so the whole check stays inside the 60s function limit.
   await Promise.all(
     pending.map(async (path) => {
-      const openai = getOpenAIClient();
-      const response = await openai.responses.parse({
-        model: resolveModel("fast"),
-        tools: [{ type: "web_search", search_context_size: "high" }],
-        include: ["web_search_call.action.sources"],
-        input: warmPathCheckPrompt([path]),
-        text: { format: zodTextFormat(ProofSchema, "warm_path_proofs") },
-      });
-      const searched = searchedProfiles(response as SearchResponse);
-      const proof = response.output_parsed?.proofs?.find((item) => item.id === path.id) ?? response.output_parsed?.proofs?.[0];
-      const slug = proof ? profileSlug(proof.profileUrl) : null;
-      const inSearch = Boolean(slug && searched.has(slug));
-      const quoteOk = Boolean(proof && quoteProves(proof.quote, path.proofTerms));
-      memory.set(cacheKey(path), inSearch && quoteOk);
+      try {
+        const response = await getOpenAIClient().responses.parse(
+          {
+            model: resolveModel("fast"),
+            tools: [{ type: "web_search", search_context_size: "medium" }],
+            include: ["web_search_call.action.sources"],
+            input: warmPathCheckPrompt([path]),
+            text: { format: zodTextFormat(ProofSchema, "warm_path_proofs") },
+          },
+          { signal: AbortSignal.timeout(CHECK_TIMEOUT_MS), maxRetries: 0 }
+        );
+        const searched = searchedProfiles(response as SearchResponse);
+        const proofs = response.output_parsed?.proofs ?? [];
+        const proof = proofs.find((item) => item.id === path.id) ?? proofs[0];
+        const slug = proof ? profileSlug(proof.profileUrl) : null;
+        const inSearch = Boolean(slug && searched.has(slug));
+        const quoteOk = Boolean(proof && quoteProves(proof.quote, path.proofTerms));
+        memory.set(cacheKey(path), inSearch && quoteOk);
+      } catch (err) {
+        failed.add(path.id);
+        console.error(`[warm-path-check] ${path.id} failed: ${err instanceof Error ? err.message : String(err)}`);
+      }
     })
   );
 
-  const found: Record<string, boolean> = {};
-  for (const path of checking) found[path.id] = memory.get(cacheKey(path)) === true;
-  return pathsWithPeople(paths, found);
+  // A tie whose search failed shows flagged; one that was checked shows only with proof.
+  return paths
+    .filter((path) => !NEEDS_PROOF.has(path.kind) || failed.has(path.id) || memory.get(cacheKey(path)) === true)
+    .map((path) => (failed.has(path.id) ? { ...path, unverified: true } : path));
 }

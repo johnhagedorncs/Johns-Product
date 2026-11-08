@@ -22,7 +22,7 @@ function path(id: string, tie: string, kind: WarmPath["kind"] = "employer"): War
     points: 2,
     url: "https://www.linkedin.com/search/results/people/?company=Deloitte",
     checkQuery: `site:linkedin.com/in Deloitte ${tie} ${Math.random()}`,
-    proofTerms: { company: ["Deloitte"], tie: [tie] },
+    proofTerms: { company: ["Deloitte"], tie: tie === "UCSB" ? ["UCSB", "UC Santa Barbara"] : [tie] },
   };
 }
 
@@ -90,5 +90,23 @@ describe("warmPathsThatHit", () => {
     await warmPathsThatHit([item]);
     expect(parse).toHaveBeenCalledOnce();
     await expect(warmPathsThatHit([])).resolves.toEqual([]);
+  });
+});
+
+describe("warmPathsThatHit failures", () => {
+  it("flags only the tie whose search failed", async () => {
+    parse.mockReset();
+    state.configured = true;
+    const ok = path("school:ok", "UCSB", "school");
+    const broken = path("employer:broken", "BrightAI");
+    parse.mockImplementation(async (body: { input: string }) => {
+      if (body.input.includes(broken.checkQuery)) throw new Error("timeout");
+      return searched(["https://www.linkedin.com/in/ana"], [{ id: ok.id, profileUrl: "https://www.linkedin.com/in/ana", quote: "Ana - Analyst - Deloitte … UC Santa Barbara" }]);
+    });
+    const { warmPathsThatHit } = await import("@/lib/ai/warm-path-check");
+    const errors = vi.spyOn(console, "error").mockImplementation(() => {});
+    const visible = await warmPathsThatHit([ok, broken]);
+    errors.mockRestore();
+    expect(visible).toEqual([ok, { ...broken, unverified: true }]);
   });
 });
