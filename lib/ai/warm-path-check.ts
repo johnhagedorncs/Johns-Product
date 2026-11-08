@@ -31,8 +31,8 @@ ${lines}
 
 For each id, find ONE real person who currently works at the company AND matches "looking for" (went to that school, belongs to that group, or used to work at that employer).
 - profileUrl: their linkedin.com/in/... URL, copied exactly from a search result.
-- quote: the exact text from that search result (title or snippet) that shows both the company and the school, group, or past employer.
-If no search result shows such a person, return an empty profileUrl and quote. Never guess, combine results, or invent anything.`;
+- quote: excerpts copied exactly from that ONE search result's title and snippet, joined with " … ": one excerpt showing where they work now (must name the company) and one showing the school, group, or past employer. LinkedIn result titles usually read "Name - Title - Company | LinkedIn", so include the title.
+If no single search result shows both, try another result; if none does, return an empty profileUrl and quote. Never guess, combine results, or invent anything.`;
 }
 
 type SearchResponse = {
