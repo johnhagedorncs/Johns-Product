@@ -10,10 +10,10 @@ const ProofSchema = z.object({
 });
 
 const memory = new Map<string, boolean>();
-const CHECK_TIMEOUT_MS = 25_000;
+const CHECK_TIMEOUT_MS = 45_000;
 
 function cacheKey(path: WarmPath): string {
-  return `v4|${path.checkQuery}`;
+  return `v5|${path.checkQuery}`;
 }
 
 /** "https://uk.linkedin.com/in/Jane-Doe/?x" → "jane-doe"; null for anything that is not a profile. */
@@ -80,7 +80,8 @@ export async function warmPathsThatHit(paths: WarmPath[]): Promise<WarmPath[]> {
       try {
         const response = await getOpenAIClient().responses.parse(
           {
-            model: resolveModel("fast"),
+            // The fast model often quoted half the evidence and missed real alumni.
+            model: resolveModel("smart"),
             tools: [{ type: "web_search", search_context_size: "medium" }],
             include: ["web_search_call.action.sources"],
             input: warmPathCheckPrompt([path]),
