@@ -88,8 +88,12 @@ export async function warmPathsThatHit(paths: WarmPath[]): Promise<WarmPath[]> {
     for (const path of pending) {
       const proof = proofs.get(path.id);
       const slug = proof ? profileSlug(proof.profileUrl) : null;
-      const real = Boolean(slug && searched.has(slug) && quoteProves(proof!.quote, path.proofTerms));
-      memory.set(cacheKey(path), real);
+      const inSearch = Boolean(slug && searched.has(slug));
+      const quoteOk = Boolean(proof && quoteProves(proof.quote, path.proofTerms));
+      memory.set(cacheKey(path), Boolean(slug) && inSearch && quoteOk);
+      console.info(
+        `[warm-path-check] ${path.id} slug=${slug ?? "-"} inSearch=${inSearch} quoteOk=${quoteOk} searched=${searched.size} quote=${JSON.stringify((proof?.quote ?? "").slice(0, 120))}`
+      );
     }
   }
 
