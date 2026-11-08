@@ -13,19 +13,28 @@ vi.mock("@/lib/ai/client", () => ({
   hasOpenAIConfig: () => state.configured,
 }));
 
-function path(id: string, query: string, kind: WarmPath["kind"] = "employer"): WarmPath {
+function path(id: string, tie: string, kind: WarmPath["kind"] = "employer"): WarmPath {
   return {
     id,
     kind,
     label: id,
     why: "shared",
     points: 2,
-    url: "https://www.linkedin.com/search/results/people/?company=x",
-    checkQuery: query,
+    url: "https://www.linkedin.com/search/results/people/?company=Deloitte",
+    checkQuery: `site:linkedin.com/in Deloitte ${tie} ${Math.random()}`,
+    proofTerms: { company: ["Deloitte"], tie: [tie] },
   };
 }
 
-const team = path("function:swe", "site:linkedin.com/in team", "function");
+/** A response whose web search returned these profile URLs. */
+function searched(urls: string[], proofs: Array<{ id: string; profileUrl: string; quote: string }>) {
+  return {
+    output: [{ type: "web_search_call", action: { sources: urls.map((url) => ({ url })) } }],
+    output_parsed: { proofs },
+  };
+}
+
+const team = { ...path("function:swe", "software engineer", "function") };
 
 describe("warmPathsThatHit", () => {
   beforeEach(() => {
@@ -36,47 +45,49 @@ describe("warmPathsThatHit", () => {
   it("shows ties flagged unverified when the model is not configured", async () => {
     state.configured = false;
     const { warmPathsThatHit } = await import("@/lib/ai/warm-path-check");
-    const tie = path("employer:none", `site:linkedin.com/in none-${Date.now()}`);
+    const tie = path("employer:none", "BrightAI");
     await expect(warmPathsThatHit([tie, team])).resolves.toEqual([{ ...tie, unverified: true }, team]);
     expect(parse).not.toHaveBeenCalled();
   });
 
-  it("keeps a tie only when the model returns a real profile URL", async () => {
-    const found = path("employer:found", `site:linkedin.com/in found-${Date.now()}`);
-    const empty = path("employer:empty", `site:linkedin.com/in empty-${Date.now()}`);
-    const fake = path("school:fake", `site:linkedin.com/in fake-${Date.now()}`, "school");
-    const missing = path("group:missing", `site:linkedin.com/in missing-${Date.now()}`, "group");
-    parse.mockResolvedValue({
-      output_parsed: {
-        proofs: [
-          { id: found.id, profileUrl: "https://www.linkedin.com/in/jane-doe-123" },
-          { id: empty.id, profileUrl: "" },
-          { id: fake.id, profileUrl: "https://example.com/in/someone" },
-        ],
-      },
-    });
+  it("keeps a tie only with a searched profile and a quote naming company and tie", async () => {
+    const real = path("school:ucsb", "UCSB", "school");
+    const invented = path("employer:brightai", "BrightAI");
+    const weakQuote = path("employer:handshake", "Handshake");
+    const empty = path("group:zbt", "ZBT", "group");
+    parse.mockResolvedValue(
+      searched(
+        ["https://www.linkedin.com/in/jane-doe", "https://uk.linkedin.com/in/sam-lee/"],
+        [
+          { id: real.id, profileUrl: "https://www.linkedin.com/in/Jane-Doe/", quote: "Jane Doe - Consultant - Deloitte | LinkedIn ... UCSB" },
+          { id: invented.id, profileUrl: "https://www.linkedin.com/in/made-up", quote: "Deloitte, ex-BrightAI" },
+          { id: weakQuote.id, profileUrl: "https://www.linkedin.com/in/sam-lee", quote: "Sam Lee - Deloitte" },
+          { id: empty.id, profileUrl: "", quote: "" },
+        ]
+      )
+    );
     const { warmPathsThatHit, warmPathCheckPrompt } = await import("@/lib/ai/warm-path-check");
-    const visible = await warmPathsThatHit([found, empty, fake, missing, team]);
-    expect(visible.map((item) => item.id)).toEqual(["employer:found", "function:swe"]);
-    expect(warmPathCheckPrompt([found])).toContain(found.checkQuery);
-    expect(parse).toHaveBeenCalledOnce();
+    const visible = await warmPathsThatHit([real, invented, weakQuote, empty, team]);
+    expect(visible.map((item) => item.id)).toEqual(["school:ucsb", "function:swe"]);
+    expect(warmPathCheckPrompt([real])).toContain(real.checkQuery);
+    expect(parse.mock.calls[0][0].include).toEqual(["web_search_call.action.sources"]);
   });
 
-  it("hides ties when the model returns nothing", async () => {
+  it("accepts a cited profile URL as searched", async () => {
+    const { searchedProfiles, profileSlug } = await import("@/lib/ai/warm-path-check");
+    const slugs = searchedProfiles({
+      output: [{ type: "message", content: [{ annotations: [{ type: "url_citation", url: "https://linkedin.com/in/pat?trk=x" }] }] }],
+    });
+    expect([...slugs]).toEqual(["pat"]);
+    expect(profileSlug("https://www.linkedin.com/company/deloitte")).toBeNull();
+  });
+
+  it("hides ties when the model returns nothing, and caches the answer", async () => {
     parse.mockResolvedValue({ output_parsed: null });
     const { warmPathsThatHit } = await import("@/lib/ai/warm-path-check");
-    const item = path("school:blank", `site:linkedin.com/in blank-${Date.now()}`, "school");
+    const item = path("school:blank", "UCSB", "school");
     await expect(warmPathsThatHit([item])).resolves.toEqual([]);
-  });
-
-  it("reuses a confirmed hit without searching again", async () => {
-    const hit = path("school:cached", `site:linkedin.com/in cached-${Date.now()}`, "school");
-    parse.mockResolvedValue({
-      output_parsed: { proofs: [{ id: hit.id, profileUrl: "https://linkedin.com/in/pat" }] },
-    });
-    const { warmPathsThatHit } = await import("@/lib/ai/warm-path-check");
-    await expect(warmPathsThatHit([hit])).resolves.toEqual([hit]);
-    await warmPathsThatHit([hit]);
+    await warmPathsThatHit([item]);
     expect(parse).toHaveBeenCalledOnce();
     await expect(warmPathsThatHit([])).resolves.toEqual([]);
   });

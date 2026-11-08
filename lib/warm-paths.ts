@@ -14,6 +14,8 @@ export type WarmPath = {
   url: string;
   /** Public-web query used to confirm at least one such person exists */
   checkQuery: string;
+  /** Words a search result must contain to count as proof: one company name and one tie name */
+  proofTerms: { company: string[]; tie: string[] };
   /** Set when the existence check could not run (no AI key or it failed), so the tie may be empty */
   unverified?: boolean;
 };
@@ -96,7 +98,8 @@ function path(
   why: string,
   points: number,
   filters: PeopleFilters,
-  tie: string
+  tie: string,
+  proofTerms: { company: string[]; tie: string[] }
 ): WarmPath {
   return {
     id: `${kind}:${id}`,
@@ -106,6 +109,7 @@ function path(
     points,
     url: linkedInPeopleSearchUrl(filters),
     checkQuery: `site:linkedin.com/in ${quote(filters.company)} ${tie}`,
+    proofTerms,
   };
 }
 
@@ -120,41 +124,53 @@ export function warmPaths(
 ): WarmPath[] {
   const company = searchCompanyName(job.company);
   const filter = companyFilterName(job.company) || company;
+  const names = [...new Set([filter, company])];
   const paths: WarmPath[] = [];
 
   for (const group of hooks.groups) {
     const aliases = hookAliases(group);
     paths.push(
       path("group", group, `${group} at ${company}`, `Shared group — the warmest cold note you can send`, 4,
-        { company: filter, keywords: quote(aliases[0]) }, anyOf(aliases))
+        { company: filter, keywords: quote(aliases[0]) }, anyOf(aliases), { company: names, tie: aliases })
     );
   }
   for (const school of hooks.schools) {
     const aliases = hookAliases(school);
     paths.push(
       path("school", school, `${school} alumni at ${company}`, `Same school — lead with it in the first line`, 3,
-        { company: filter, school: longest(aliases) }, anyOf(aliases))
+        { company: filter, school: longest(aliases) }, anyOf(aliases), { company: names, tie: aliases })
     );
   }
   for (const employer of hooks.employers) {
     if (employer.toLowerCase() === filter.toLowerCase() || employer.toLowerCase() === company.toLowerCase()) continue;
     paths.push(
       path("employer", employer, `Ex-${employer} at ${company}`, `Shared employer — ask how they made the jump`, 2,
-        { company: filter, keywords: quote(employer) }, quote(employer))
+        { company: filter, keywords: quote(employer) }, quote(employer), { company: names, tie: [employer] })
     );
   }
 
   const fn = roleFunction(job.title);
   paths.push(
     path("function", fn.keyword, `${fn.label} at ${company}`, `Same function — can speak to the team and refer`, 4,
-      { company: filter, title: fn.keyword }, quote(fn.keyword))
+      { company: filter, title: fn.keyword }, quote(fn.keyword), { company: names, tie: [fn.keyword] })
   );
   paths.push(
     path("recruiter", "recruiting", `Recruiters at ${company}`, `Recruiting — can confirm the req and route your application`, 3,
-      { company: filter, title: "recruiter" }, anyOf(["recruiter", "talent acquisition"]))
+      { company: filter, title: "recruiter" }, anyOf(["recruiter", "talent acquisition"]), { company: names, tie: ["recruiter", "talent acquisition"] })
   );
 
   return paths.sort((a, b) => b.points - a.points);
+}
+
+function squash(text: string): string {
+  return text.toLowerCase().replace(/[^a-z0-9]+/g, "");
+}
+
+/** True when a search-result quote names the company and the shared tie. */
+export function quoteProves(quote: string, terms: WarmPath["proofTerms"]): boolean {
+  const text = squash(quote);
+  const has = (words: string[]) => words.some((word) => squash(word).length > 1 && text.includes(squash(word)));
+  return has(terms.company) && has(terms.tie);
 }
 
 /**

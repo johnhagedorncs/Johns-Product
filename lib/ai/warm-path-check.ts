@@ -3,19 +3,23 @@ import "server-only";
 import { z } from "zod";
 import { zodTextFormat } from "openai/helpers/zod";
 import { getOpenAIClient, hasOpenAIConfig, resolveModel } from "@/lib/ai/client";
-import { NEEDS_PROOF, pathsWithPeople, uncheckedPaths, type WarmPath } from "@/lib/warm-paths";
+import { NEEDS_PROOF, pathsWithPeople, quoteProves, uncheckedPaths, type WarmPath } from "@/lib/warm-paths";
 
 const ProofSchema = z.object({
-  proofs: z.array(z.object({ id: z.string(), profileUrl: z.string() })),
+  proofs: z.array(z.object({ id: z.string(), profileUrl: z.string(), quote: z.string() })),
 });
 
 const memory = new Map<string, boolean>();
 
 function cacheKey(path: WarmPath): string {
-  return `v3|${path.checkQuery}`;
+  return `v4|${path.checkQuery}`;
 }
 
-const PROFILE_URL = /^https?:\/\/([a-z]{2,3}\.)?(www\.)?linkedin\.com\/in\/[^/?#\s]+/i;
+/** "https://uk.linkedin.com/in/Jane-Doe/?x" → "jane-doe"; null for anything that is not a profile. */
+export function profileSlug(url: string): string | null {
+  const match = url.trim().match(/^https?:\/\/(?:[a-z]{2,3}\.|www\.)?linkedin\.com\/in\/([^/?#\s]+)/i);
+  return match ? decodeURIComponent(match[1]).toLowerCase() : null;
+}
 
 export function warmPathCheckPrompt(paths: WarmPath[]): string {
   const lines = paths
@@ -25,13 +29,41 @@ export function warmPathCheckPrompt(paths: WarmPath[]): string {
 
 ${lines}
 
-For each id, return profileUrl: the linkedin.com/in/... URL of ONE real person who currently works at the company AND matches "looking for" (went to that school, belongs to that group, or used to work at that employer), copied exactly from a search result. If you did not find such a person, return an empty string. Never guess or invent a URL.`;
+For each id, find ONE real person who currently works at the company AND matches "looking for" (went to that school, belongs to that group, or used to work at that employer).
+- profileUrl: their linkedin.com/in/... URL, copied exactly from a search result.
+- quote: the exact text from that search result (title or snippet) that shows both the company and the school, group, or past employer.
+If no search result shows such a person, return an empty profileUrl and quote. Never guess, combine results, or invent anything.`;
+}
+
+type SearchResponse = {
+  output?: Array<{
+    type: string;
+    action?: { sources?: Array<{ url?: string }> };
+    content?: Array<{ annotations?: Array<{ type: string; url?: string }> }>;
+  }>;
+};
+
+/** Profile slugs the web search actually returned or cited. */
+export function searchedProfiles(response: SearchResponse): Set<string> {
+  const slugs = new Set<string>();
+  const add = (url?: string) => {
+    const slug = url ? profileSlug(url) : null;
+    if (slug) slugs.add(slug);
+  };
+  for (const item of response.output ?? []) {
+    for (const source of item.action?.sources ?? []) add(source.url);
+    for (const part of item.content ?? []) {
+      for (const note of part.annotations ?? []) if (note.type === "url_citation") add(note.url);
+    }
+  }
+  return slugs;
 }
 
 /**
  * Keep a school, group, or past-employer path only when web search turns up a
- * real profile behind it. Without a model key nothing can be checked, so
- * they show flagged as unverified.
+ * real profile behind it: the URL must be one the search returned, and the
+ * quoted result must name both the company and the tie. Without a model key
+ * nothing can be checked, so those paths show flagged as unverified.
  */
 export async function warmPathsThatHit(paths: WarmPath[]): Promise<WarmPath[]> {
   const checking = paths.filter((path) => NEEDS_PROOF.has(path.kind));
@@ -44,15 +76,20 @@ export async function warmPathsThatHit(paths: WarmPath[]): Promise<WarmPath[]> {
     const response = await openai.responses.parse({
       model: resolveModel("fast"),
       tools: [{ type: "web_search", search_context_size: "medium" }],
+      include: ["web_search_call.action.sources"],
       input: warmPathCheckPrompt(pending),
       text: { format: zodTextFormat(ProofSchema, "warm_path_proofs") },
     });
-    const proofs = new Map<string, string>();
+    const searched = searchedProfiles(response as SearchResponse);
+    const proofs = new Map<string, { profileUrl: string; quote: string }>();
     for (const proof of response.output_parsed?.proofs ?? []) {
-      if (!proofs.has(proof.id)) proofs.set(proof.id, proof.profileUrl.trim());
+      if (!proofs.has(proof.id)) proofs.set(proof.id, proof);
     }
     for (const path of pending) {
-      memory.set(cacheKey(path), PROFILE_URL.test(proofs.get(path.id) ?? ""));
+      const proof = proofs.get(path.id);
+      const slug = proof ? profileSlug(proof.profileUrl) : null;
+      const real = Boolean(slug && searched.has(slug) && quoteProves(proof!.quote, path.proofTerms));
+      memory.set(cacheKey(path), real);
     }
   }
 

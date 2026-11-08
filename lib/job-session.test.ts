@@ -19,6 +19,7 @@ const path: WarmPath = {
   points: 3,
   url: "https://www.linkedin.com/search/results/people/?company=Clay&school=x",
   checkQuery: "site:linkedin.com/in Clay UCSB",
+  proofTerms: { company: ["Clay"], tie: ["UCSB"] },
 };
 
 describe("job session store", () => {

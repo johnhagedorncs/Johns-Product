@@ -3,6 +3,7 @@ import {
   companyFilterName,
   linkedInPeopleSearchUrl,
   pathsWithPeople,
+  quoteProves,
   roleFunction,
   searchCompanyName,
   warmPaths,
