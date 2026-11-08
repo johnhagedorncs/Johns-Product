@@ -8,7 +8,7 @@ import type { WarmPath } from "@/lib/warm-paths";
  * tabs never re-runs a search or wipes a draft.
  */
 export const DRAFTS_KEY = "warm-apply-drafts";
-export const WARM_PATHS_KEY = "warm-apply-warm-paths-v4";
+export const WARM_PATHS_KEY = "warm-apply-warm-paths-v5";
 export const READ_KEY = "warm-apply-read-this-session";
 
 const MAX_DRAFTS = 100;

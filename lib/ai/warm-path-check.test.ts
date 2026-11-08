@@ -71,10 +71,15 @@ describe("warmPathsThatHit", () => {
     expect(visible.map((item) => item.id)).toEqual(["school:ucsb", "function:swe"]);
     expect(warmPathCheckPrompt([real])).toContain(real.checkQuery);
     expect(parse.mock.calls[0][0].include).toEqual(["web_search_call.action.sources"]);
+    // Unproven ties get one retry with a second wording.
+    expect(parse.mock.calls.length).toBe(4 + 3);
   });
 
   it("accepts a cited profile URL as searched", async () => {
-    const { searchedProfiles, profileSlug } = await import("@/lib/ai/warm-path-check");
+    const { searchedProfiles, profileSlug, altQuery } = await import("@/lib/ai/warm-path-check");
+    expect(altQuery({ ...path("school:x", "UCSB", "school"), proofTerms: { company: ["Deloitte"], tie: ["UCSB", "University of California, Santa Barbara"] } })).toBe(
+      '"Deloitte" "University of California Santa Barbara" linkedin'
+    );
     const slugs = searchedProfiles({
       output: [{ type: "message", content: [{ annotations: [{ type: "url_citation", url: "https://linkedin.com/in/pat?trk=x" }] }] }],
     });
@@ -88,7 +93,7 @@ describe("warmPathsThatHit", () => {
     const item = path("school:blank", "UCSB", "school");
     await expect(warmPathsThatHit([item])).resolves.toEqual([]);
     await warmPathsThatHit([item]);
-    expect(parse).toHaveBeenCalledOnce();
+    expect(parse).toHaveBeenCalledTimes(2);
     await expect(warmPathsThatHit([])).resolves.toEqual([]);
   });
 });

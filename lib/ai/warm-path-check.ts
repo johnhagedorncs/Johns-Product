@@ -10,10 +10,10 @@ const ProofSchema = z.object({
 });
 
 const memory = new Map<string, boolean>();
-const CHECK_TIMEOUT_MS = 45_000;
+const CHECK_TIMEOUT_MS = 25_000;
 
 function cacheKey(path: WarmPath): string {
-  return `v5|${path.checkQuery}`;
+  return `v6|${path.checkQuery}`;
 }
 
 /** "https://uk.linkedin.com/in/Jane-Doe/?x" → "jane-doe"; null for anything that is not a profile. */
@@ -22,9 +22,15 @@ export function profileSlug(url: string): string | null {
   return match ? decodeURIComponent(match[1]).toLowerCase() : null;
 }
 
-export function warmPathCheckPrompt(paths: WarmPath[]): string {
+/** A second wording for the retry: the most formal tie name, both terms quoted. */
+export function altQuery(path: WarmPath): string {
+  const tie = path.proofTerms.tie.reduce((a, b) => (b.length > a.length ? b : a), path.proofTerms.tie[0] ?? "");
+  return `"${path.proofTerms.company[0]}" "${tie.replace(/\s*,\s*/g, " ")}" linkedin`;
+}
+
+export function warmPathCheckPrompt(paths: WarmPath[], query?: string): string {
   const lines = paths
-    .map((path) => `- id: ${path.id}\n  looking for: ${path.label}\n  search: ${path.checkQuery}`)
+    .map((path) => `- id: ${path.id}\n  looking for: ${path.label}\n  search: ${query ?? path.checkQuery}`)
     .join("\n");
   return `For each people search below, run a web search for public LinkedIn profiles.
 
@@ -60,6 +66,24 @@ export function searchedProfiles(response: SearchResponse): Set<string> {
   return slugs;
 }
 
+async function provePath(path: WarmPath, query: string): Promise<boolean> {
+  const response = await getOpenAIClient().responses.parse(
+    {
+      model: resolveModel("fast"),
+      tools: [{ type: "web_search", search_context_size: "medium" }],
+      include: ["web_search_call.action.sources"],
+      input: warmPathCheckPrompt([path], query),
+      text: { format: zodTextFormat(ProofSchema, "warm_path_proofs") },
+    },
+    { signal: AbortSignal.timeout(CHECK_TIMEOUT_MS), maxRetries: 0 }
+  );
+  const searched = searchedProfiles(response as SearchResponse);
+  const proofs = response.output_parsed?.proofs ?? [];
+  const proof = proofs.find((item) => item.id === path.id) ?? proofs[0];
+  const slug = proof ? profileSlug(proof.profileUrl) : null;
+  return Boolean(slug && searched.has(slug) && quoteProves(proof!.quote, path.proofTerms));
+}
+
 /**
  * Keep a school, group, or past-employer path only when web search turns up a
  * real profile behind it: the URL must be one the search returned, and the
@@ -74,28 +98,15 @@ export async function warmPathsThatHit(paths: WarmPath[]): Promise<WarmPath[]> {
   const pending = checking.filter((path) => !memory.has(cacheKey(path)));
   const failed = new Set<string>();
   // One search per tie (batching gave each only a couple of results), each
-  // capped so the whole check stays inside the 60s function limit.
+  // attempt capped at 25s so two attempts fit the 60s function limit.
   await Promise.all(
     pending.map(async (path) => {
       try {
-        const response = await getOpenAIClient().responses.parse(
-          {
-            // The fast model often quoted half the evidence and missed real alumni.
-            model: resolveModel("smart"),
-            tools: [{ type: "web_search", search_context_size: "medium" }],
-            include: ["web_search_call.action.sources"],
-            input: warmPathCheckPrompt([path]),
-            text: { format: zodTextFormat(ProofSchema, "warm_path_proofs") },
-          },
-          { signal: AbortSignal.timeout(CHECK_TIMEOUT_MS), maxRetries: 0 }
-        );
-        const searched = searchedProfiles(response as SearchResponse);
-        const proofs = response.output_parsed?.proofs ?? [];
-        const proof = proofs.find((item) => item.id === path.id) ?? proofs[0];
-        const slug = proof ? profileSlug(proof.profileUrl) : null;
-        const inSearch = Boolean(slug && searched.has(slug));
-        const quoteOk = Boolean(proof && quoteProves(proof.quote, path.proofTerms));
-        memory.set(cacheKey(path), inSearch && quoteOk);
+        // Fast model, and a second wording if the first finds no proof: web
+        // results vary, and a single miss hid real alumni.
+        let proven = await provePath(path, path.checkQuery);
+        if (!proven) proven = await provePath(path, altQuery(path));
+        memory.set(cacheKey(path), proven);
       } catch (err) {
         failed.add(path.id);
         console.error(`[warm-path-check] ${path.id} failed: ${err instanceof Error ? err.message : String(err)}`);
