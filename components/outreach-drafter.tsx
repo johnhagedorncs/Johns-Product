@@ -1,22 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2 } from "lucide-react";
-import { draftLinkedInForJob } from "@/app/actions/ai";
+import { Loader2, Mail } from "lucide-react";
+import { draftLinkedInForJob, findContactEmail } from "@/app/actions/ai";
 import { Chip } from "@/components/chip";
 import { DraftBox } from "@/components/draft-box";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "cn";
 import type { LinkedInDraft } from "@/lib/ai/linkedin-draft";
+import type { EmailContact } from "@/lib/apollo";
 import { initials } from "@/lib/draft-text";
 import { readDraft, saveDraft } from "@/lib/job-session";
 import type { SeekerPrefs } from "@/lib/seeker";
 import { addBusinessDays, parseTrackerOverrides, TRACKER_STORAGE_KEY } from "@/lib/tracker";
 import type { Job } from "@/lib/types";
 
+const fieldClass =
+  "w-full rounded-2xl border border-border bg-muted/60 p-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none";
+
 export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => SeekerPrefs }) {
   // Rendered only after the role loads in the browser, so storage is safe to read here.
   const [saved] = useState(() => readDraft(job.id));
+  const [linkedinUrl, setLinkedinUrl] = useState(saved?.linkedinUrl ?? "");
   const [paste, setPaste] = useState(saved?.paste ?? "");
+  const [contact, setContact] = useState<EmailContact | null>(saved?.contact ?? null);
+  const [looking, setLooking] = useState(false);
   const [drafting, setDrafting] = useState(false);
   const [draft, setDraft] = useState<LinkedInDraft | null>(saved?.draft ?? null);
   const [note, setNote] = useState(saved?.note ?? "");
@@ -25,15 +33,46 @@ export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => Seeke
 
   // Autosave so switching tabs never loses a draft in progress.
   useEffect(() => {
-    saveDraft(job.id, { paste, draft, note, messaged });
-  }, [job.id, paste, draft, note, messaged]);
+    saveDraft(job.id, { paste, draft, note, messaged, linkedinUrl, contact });
+  }, [job.id, paste, draft, note, messaged, linkedinUrl, contact]);
 
-  async function onDraft(event: React.FormEvent) {
+  const email = contact?.email ?? "";
+
+  async function onFindEmail(event: React.FormEvent) {
     event.preventDefault();
+    setLooking(true);
+    setError("");
+    try {
+      const result = await findContactEmail(job, linkedinUrl, paste);
+      setContact(result.contact ?? null);
+      setDraft(null);
+      setNote("");
+      setMessaged(false);
+      if (result.error) setError(result.error);
+    } catch {
+      setError("Could not reach the server. Try again.");
+    } finally {
+      setLooking(false);
+    }
+  }
+
+  async function onDraft() {
+    if (!contact?.email) return;
     setDrafting(true);
     setError("");
     try {
-      const result = await draftLinkedInForJob(job, paste, seeker());
+      const result = await draftLinkedInForJob(
+        job,
+        paste,
+        {
+          name: contact.name,
+          title: contact.title,
+          company: contact.company || job.company,
+          email: contact.email,
+          linkedinUrl: contact.linkedinUrl,
+        },
+        seeker()
+      );
       if (!result.draft) {
         setError(result.error ?? "Could not draft outreach.");
         return;
@@ -46,6 +85,16 @@ export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => Seeke
     } finally {
       setDrafting(false);
     }
+  }
+
+  function startOver() {
+    setContact(null);
+    setDraft(null);
+    setNote("");
+    setMessaged(false);
+    setLinkedinUrl("");
+    setPaste("");
+    setError("");
   }
 
   function markMessaged() {
@@ -65,54 +114,130 @@ export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => Seeke
       nextFollowup: addBusinessDays(new Date(), 3),
       connectionNote: note,
       emailDraft: note,
+      email: draft.email || email,
     };
     localStorage.setItem(TRACKER_STORAGE_KEY, JSON.stringify(overrides));
     setMessaged(true);
   }
 
+  const subject = draft?.subject ?? "";
+  const mailto = draft?.email
+    ? `mailto:${draft.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(note)}`
+    : "";
+
   return (
     <div className="flex flex-col gap-4">
-      <form onSubmit={onDraft} className="rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-3xl">Draft a note</h2>
+      <form onSubmit={onFindEmail} className="rounded-2xl border border-border bg-card p-6">
+        <h2 className="text-3xl">Reach out</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Open a profile from the warm paths, select all (⌘A), copy, and paste here. Drafts only — you send it.
+          1. Pick someone from the warm paths. 2. Find their email. 3. Draft the note. Drafts only — you send it.
         </p>
+        <label className="mt-3 block text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Their LinkedIn URL
+        </label>
+        <input
+          value={linkedinUrl}
+          onChange={(event) => setLinkedinUrl(event.target.value)}
+          placeholder="https://www.linkedin.com/in/…"
+          aria-label="Their LinkedIn URL"
+          className={`mt-1 ${fieldClass}`}
+        />
+        <label className="mt-3 block text-xs font-medium tracking-wide text-muted-foreground uppercase">
+          Their profile (select all ⌘A, copy, paste)
+        </label>
         <textarea
           value={paste}
           onChange={(event) => setPaste(event.target.value)}
           rows={6}
-          required
           aria-label="Pasted LinkedIn profile"
-          placeholder="Paste their LinkedIn profile — headline, About, experience, education."
-          className="mt-3 w-full rounded-2xl border border-border bg-muted/60 p-3 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          placeholder="Headline, About, experience, education. Used to personalize the note."
+          className={`mt-1 ${fieldClass}`}
         />
-        <Button type="submit" disabled={drafting} className="rounded-full px-4 mt-3 border-transparent bg-brand">
-          {drafting ? <Loader2 className="size-4 animate-spin" /> : null}
-          Draft outreach
-        </Button>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <Button
+            type="submit"
+            disabled={looking || (!linkedinUrl.trim() && !paste.trim())}
+            className="rounded-full px-4 border-transparent bg-brand"
+          >
+            {looking ? <Loader2 className="size-4 animate-spin" /> : <Mail className="size-4" />}
+            Find their email
+          </Button>
+          <span className="text-xs text-muted-foreground">Uses 1 lookup credit, only when an email is found.</span>
+        </div>
         {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
       </form>
 
-      {draft ? (
+      {contact ? (
         <article className="rounded-2xl border border-border bg-card p-6">
           <div className="flex items-center gap-3">
             <div className="grid size-11 place-items-center rounded-full bg-brand text-sm font-semibold">
-              {initials(draft.personName)}
+              {initials(contact.name)}
             </div>
             <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <h3 className="text-2xl">{draft.personName}</h3>
-                {draft.sharedHook ? <Chip tone="purple">{draft.sharedHook}</Chip> : null}
-              </div>
-              <p className="text-sm text-muted-foreground">{draft.rankReason}</p>
+              <h3 className="text-2xl">{contact.name || "Unknown name"}</h3>
+              <p className="text-sm text-muted-foreground">
+                {[contact.title, contact.company].filter(Boolean).join(" · ") || "No title on file"}
+              </p>
             </div>
           </div>
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {email ? (
+              <>
+                <span className="font-mono text-sm">{email}</span>
+                <Chip tone={["verified", "valid"].includes(contact.emailStatus) ? "green" : "amber"}>
+                  {(contact.emailStatus || "unverified").replace("_", "-")}
+                  {contact.confidence && contact.source === "hunter" ? ` · ${contact.confidence}` : ""}
+                </Chip>
+              </>
+            ) : (
+              <span className="text-sm text-muted-foreground">No email found — pick someone else.</span>
+            )}
+          </div>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button
+              type="button"
+              onClick={onDraft}
+              disabled={!email || drafting || !paste.trim()}
+              className="rounded-full px-4 border-transparent bg-brand"
+            >
+              {drafting ? <Loader2 className="size-4 animate-spin" /> : null}
+              {draft ? "Redraft email" : "Draft email"}
+            </Button>
+            <Button type="button" variant="outline" onClick={startOver} className="rounded-full px-4">
+              Pick someone else
+            </Button>
+          </div>
+          {email && !paste.trim() ? (
+            <p className="mt-2 text-xs text-muted-foreground">Paste their profile above so the note can be personal.</p>
+          ) : null}
+        </article>
+      ) : null}
+
+      {draft && email ? (
+        <article className="rounded-2xl border border-border bg-card p-6">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-2xl">Email to {draft.personName}</h3>
+            {draft.sharedHook ? <Chip tone="purple">{draft.sharedHook}</Chip> : null}
+          </div>
+          <p className="text-sm text-muted-foreground">{draft.rankReason}</p>
+          <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
+            <dt className="text-muted-foreground">To</dt>
+            <dd className="font-mono">{draft.email}</dd>
+            <dt className="text-muted-foreground">Subject</dt>
+            <dd>{subject}</dd>
+          </dl>
           <div className="mt-4">
             <DraftBox email={note} onChange={setNote} />
           </div>
-          <Button type="button" onClick={markMessaged} disabled={messaged} className="rounded-full px-4 mt-4 border-transparent bg-brand">
-            {messaged ? "Messaged ✓ — follow-up in 3 business days" : "Mark messaged"}
-          </Button>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <a href={mailto} className={cn(buttonVariants({ variant: "outline" }), "rounded-full px-4")}>
+              <Mail className="size-4" />
+              Open in mail app
+            </a>
+            <Button type="button" onClick={markMessaged} disabled={messaged} className="rounded-full px-4 border-transparent bg-brand">
+              {messaged ? "Messaged ✓ — follow-up in 3 business days" : "Mark messaged"}
+            </Button>
+          </div>
         </article>
       ) : null}
     </div>

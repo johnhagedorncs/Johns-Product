@@ -40,6 +40,7 @@ describe("outreach drafts", () => {
       linkedinUrl: "",
       sharedHook: "UCSB",
       rankReason: "UCSB",
+      subject: "UCSB grad",
       connectionNote: "x".repeat(5000),
     });
     const { draftFromLinkedInPaste } = await import("@/lib/ai/linkedin-draft");
@@ -66,8 +67,11 @@ describe("outreach drafts", () => {
         pitch: "p",
       },
       "UCSB B.S. Computer Engineering",
-      "Headline: SWE"
+      "Headline: SWE",
+      { name: "Maya Lin", title: "SWE", company: "Co", email: "maya@co.com", linkedinUrl: "" }
     );
+    expect(draft.email).toBe("maya@co.com");
+    expect(parseStructuredResponse.mock.calls.at(-1)?.[0].input).toContain("maya@co.com");
     expect(parseStructuredResponse.mock.calls.at(-1)?.[0].input).toContain("UCSB B.S. Computer Engineering");
     expect(draft.connectionNote).toHaveLength(4000);
     expect(parseStructuredResponse.mock.calls.at(-1)?.[0].input).toContain(

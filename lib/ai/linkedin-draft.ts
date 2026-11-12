@@ -11,10 +11,32 @@ export const LinkedInDraftSchema = z.object({
   linkedinUrl: z.string(),
   sharedHook: z.string(),
   rankReason: z.string(),
+  subject: z.string(),
   connectionNote: z.string(),
 });
 
-export type LinkedInDraft = z.infer<typeof LinkedInDraftSchema>;
+/** The model's draft plus the looked-up email it is addressed to. */
+export type LinkedInDraft = z.infer<typeof LinkedInDraftSchema> & { email?: string };
+
+/** Who the email goes to, as the email lookup matched them. */
+export type DraftRecipient = { name: string; title: string; company: string; email: string; linkedinUrl: string };
+
+const NameSchema = z.object({ name: z.string() });
+
+/** Their full name from a pasted LinkedIn profile ("" if it isn't there). */
+export async function nameFromPaste(pastedProfile: string): Promise<string> {
+  const parsed = await parseStructuredResponse({
+    modelTier: "fast",
+    schema: NameSchema,
+    schemaName: "profile_name",
+    input: `What is the full name of the person whose LinkedIn profile this is? Ignore names of people in "People also viewed", recommendations, or the viewer. Return "" if unclear.
+
+"""
+${pastedProfile.slice(0, 4000)}
+"""`,
+  });
+  return parsed.name.trim();
+}
 
 const MESSAGE_TEMPLATE = `Hi {their first name},
 
@@ -35,7 +57,8 @@ export async function draftFromLinkedInPaste(
   job: Job,
   profile: Profile,
   resumeText: string,
-  pastedProfile: string
+  pastedProfile: string,
+  recipient: DraftRecipient
 ): Promise<LinkedInDraft> {
   const parsed = await parseStructuredResponse({
     modelTier: "smart",
@@ -57,14 +80,18 @@ Role they applied to (or are applying to today):
 ${job.company} — ${job.title} in ${job.location}
 ${(job.description || "").slice(0, 3000)}
 
+Recipient (the email goes to ${recipient.email}):
+${recipient.name}${recipient.title ? ` — ${recipient.title}` : ""}${recipient.company ? ` at ${recipient.company}` : ""}
+
 Pasted LinkedIn profile:
 """
 ${pastedProfile.slice(0, 8000)}
 """
 
 Return:
-- personName: from the profile.
+- personName: the recipient's name above.
 - linkedinUrl: their linkedin.com/in URL if it appears in the paste, else "".
+- subject: a short, specific email subject line (under 70 characters), e.g. "UCSB grad interested in {company}'s {team}". No clickbait.
 - sharedHook: the single strongest real overlap (same school, past employer, group, team, or tech) — "" if none. Never invent one.
 - rankReason: one line on why this person is worth a note for this role.
 - connectionNote: the email they will send, following this structure (personalize every bracket; skip school paragraphs if there is no real shared school). Use plain text with line breaks between paragraphs. No "pick your brain", no referral ask yet. At most 4000 characters.
@@ -74,6 +101,9 @@ ${MESSAGE_TEMPLATE}`,
   });
   return {
     ...parsed,
+    personName: recipient.name || parsed.personName,
+    linkedinUrl: recipient.linkedinUrl || parsed.linkedinUrl,
+    email: recipient.email,
     connectionNote: clampConnectionNote(parsed.connectionNote),
   };
 }

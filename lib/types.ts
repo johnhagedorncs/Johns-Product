@@ -82,5 +82,7 @@ export interface TrackerRow {
   nextFollowup: string;
   connectionNote?: string;
   emailDraft?: string;
+  /** Work email from Apollo, when the note went out by email */
+  email?: string;
   coffeeQuestions?: string[];
 }

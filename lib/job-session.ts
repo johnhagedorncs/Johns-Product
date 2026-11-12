@@ -1,4 +1,5 @@
 import type { LinkedInDraft } from "@/lib/ai/linkedin-draft";
+import type { EmailContact } from "@/lib/apollo";
 import type { WarmPath } from "@/lib/warm-paths";
 
 /**
@@ -63,6 +64,10 @@ export type SavedDraft = {
   draft: LinkedInDraft | null;
   note: string;
   messaged: boolean;
+  /** Their LinkedIn URL, as typed (used for the email lookup) */
+  linkedinUrl?: string;
+  /** The email lookup's match, kept so a reload never spends another credit */
+  contact?: EmailContact | null;
 };
 
 export function readDraft(jobId: string, store = local()): SavedDraft | null {
@@ -73,11 +78,13 @@ export function readDraft(jobId: string, store = local()): SavedDraft | null {
     draft: saved.draft ?? null,
     note: typeof saved.note === "string" ? saved.note : "",
     messaged: Boolean(saved.messaged),
+    ...(typeof saved.linkedinUrl === "string" && saved.linkedinUrl ? { linkedinUrl: saved.linkedinUrl } : {}),
+    ...(saved.contact && typeof saved.contact === "object" ? { contact: saved.contact } : {}),
   };
 }
 
 export function saveDraft(jobId: string, value: SavedDraft, store = local()): void {
-  const empty = !value.paste.trim() && !value.draft;
+  const empty = !value.paste.trim() && !value.draft && !value.linkedinUrl?.trim() && !value.contact;
   writeEntry(DRAFTS_KEY, jobId, empty ? null : value, MAX_DRAFTS, store);
 }
 

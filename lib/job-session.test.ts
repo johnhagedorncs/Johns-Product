@@ -28,6 +28,21 @@ describe("job session store", () => {
     sessionStorage.clear();
   });
 
+  it("keeps the Apollo match so a reload never spends another credit", () => {
+    const contact = {
+      name: "Maya Lin",
+      title: "AI Engineer",
+      company: "Deloitte",
+      email: "maya@deloitte.com",
+      emailStatus: "verified",
+      linkedinUrl: "https://www.linkedin.com/in/maya",
+      confidence: "high",
+    };
+    saveDraft("dt-1", { paste: "", draft: null, note: "", messaged: false, linkedinUrl: "linkedin.com/in/maya", contact });
+    expect(readDraft("dt-1")?.contact).toEqual(contact);
+    expect(readDraft("dt-1")?.linkedinUrl).toBe("linkedin.com/in/maya");
+  });
+
   it("keeps a draft in progress for each role and forgets empty ones", () => {
     expect(readDraft("clay-1")).toBeNull();
     saveDraft("clay-1", { paste: "Jane Doe — GTM Engineer", draft: null, note: "", messaged: false });
