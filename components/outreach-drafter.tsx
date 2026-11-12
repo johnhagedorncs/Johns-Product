@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Loader2, Mail } from "lucide-react";
-import { draftLinkedInForJob, findContactEmail } from "@/app/actions/ai";
+import { Loader2, Mail, Search } from "lucide-react";
+import { draftLinkedInForJob, findContactEmail, researchContact } from "@/app/actions/ai";
 import { Chip } from "@/components/chip";
 import { DraftBox } from "@/components/draft-box";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -25,6 +25,8 @@ export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => Seeke
   const [paste, setPaste] = useState(saved?.paste ?? "");
   const [contact, setContact] = useState<EmailContact | null>(saved?.contact ?? null);
   const [looking, setLooking] = useState(false);
+  const [researching, setResearching] = useState(false);
+  const [researchNote, setResearchNote] = useState("");
   const [drafting, setDrafting] = useState(false);
   const [draft, setDraft] = useState<LinkedInDraft | null>(saved?.draft ?? null);
   const [note, setNote] = useState(saved?.note ?? "");
@@ -48,11 +50,37 @@ export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => Seeke
       setDraft(null);
       setNote("");
       setMessaged(false);
+      setResearchNote("");
       if (result.error) setError(result.error);
+      // Found them: read up on them right away unless a profile is already pasted.
+      if (result.contact?.email && !paste.trim()) void readProfile(result.contact);
     } catch {
       setError("Could not reach the server. Try again.");
     } finally {
       setLooking(false);
+    }
+  }
+
+  async function readProfile(person: EmailContact) {
+    setResearching(true);
+    setResearchNote("");
+    try {
+      const result = await researchContact({
+        name: person.name,
+        title: person.title,
+        company: person.company || job.company,
+        linkedinUrl: person.linkedinUrl || linkedinUrl,
+      });
+      if (result.profile) {
+        setPaste((current) => current.trim() || result.profile);
+        setResearchNote("Filled in from public web results. Check it, edit, or paste their LinkedIn for more detail.");
+      } else {
+        setResearchNote(result.error ?? "Couldn't find much about them online. Draft anyway, or paste their LinkedIn profile.");
+      }
+    } catch {
+      setResearchNote("Couldn't read their public profile. Draft anyway, or paste it.");
+    } finally {
+      setResearching(false);
     }
   }
 
@@ -95,6 +123,7 @@ export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => Seeke
     setLinkedinUrl("");
     setPaste("");
     setError("");
+    setResearchNote("");
   }
 
   function markMessaged() {
@@ -143,14 +172,18 @@ export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => Seeke
           className={`mt-1 ${fieldClass}`}
         />
         <label className="mt-3 block text-xs font-medium tracking-wide text-muted-foreground uppercase">
-          Their profile (select all ⌘A, copy, paste)
+          Their profile (filled in automatically — edit or paste to improve)
         </label>
         <textarea
           value={paste}
           onChange={(event) => setPaste(event.target.value)}
           rows={6}
           aria-label="Pasted LinkedIn profile"
-          placeholder="Headline, About, experience, education. Used to personalize the note."
+          placeholder={
+            researching
+              ? "Reading their public profile…"
+              : "Optional. Found automatically after the email lookup, or paste their LinkedIn (⌘A, copy)."
+          }
           className={`mt-1 ${fieldClass}`}
         />
         <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -197,18 +230,29 @@ export function OutreachDrafter({ job, seeker }: { job: Job; seeker: () => Seeke
             <Button
               type="button"
               onClick={onDraft}
-              disabled={!email || drafting || !paste.trim()}
+              disabled={!email || drafting || researching}
               className="rounded-full px-4 border-transparent bg-brand"
             >
               {drafting ? <Loader2 className="size-4 animate-spin" /> : null}
               {draft ? "Redraft email" : "Draft email"}
             </Button>
+            {email && !paste.trim() && !researching ? (
+              <Button type="button" variant="outline" onClick={() => readProfile(contact)} className="rounded-full px-4">
+                <Search className="size-4" />
+                Read their profile
+              </Button>
+            ) : null}
             <Button type="button" variant="outline" onClick={startOver} className="rounded-full px-4">
               Pick someone else
             </Button>
           </div>
-          {email && !paste.trim() ? (
-            <p className="mt-2 text-xs text-muted-foreground">Paste their profile above so the note can be personal.</p>
+          {researching ? (
+            <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" />
+              Reading their public profile so the note can be personal…
+            </p>
+          ) : researchNote ? (
+            <p className="mt-2 text-xs text-muted-foreground">{researchNote}</p>
           ) : null}
         </article>
       ) : null}

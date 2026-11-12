@@ -12,6 +12,7 @@ import {
 } from "@/lib/ai/linkedin-draft";
 import { extractLinkedInUrl, hasApolloConfig, matchContact, type EmailContact } from "@/lib/apollo";
 import { findWithHunter, hasHunterConfig } from "@/lib/hunter";
+import { researchProfile, type ResearchTarget } from "@/lib/ai/profile-research";
 import { tailorResume, type TailorResult } from "@/lib/ai/tailor-resume";
 import { getProfile } from "@/lib/profile";
 import { effectiveResume, normalizeSeeker, profileForSeeker, type SeekerPrefs } from "@/lib/seeker";
@@ -84,6 +85,21 @@ export async function findContactEmail(
   }
 }
 
+/**
+ * Between steps 2 and 3: read up on the person from public web results, so
+ * the user doesn't have to paste their LinkedIn profile.
+ */
+export async function researchContact(target: ResearchTarget): Promise<{ profile: string; error?: string }> {
+  if (!target?.name?.trim()) return { profile: "" };
+  if (!hasOpenAIConfig()) return { profile: "", error: NO_KEY };
+  try {
+    return { profile: await researchProfile(target) };
+  } catch (err) {
+    console.error(`[profile-research] failed: ${err instanceof Error ? err.message : String(err)}`);
+    return { profile: "", error: "Couldn't read their public profile. You can paste it, or draft anyway." };
+  }
+}
+
 /** Step 3: draft the email. Refuses without a looked-up email to send it to. */
 export async function draftLinkedInForJob(
   job: Job,
@@ -91,9 +107,12 @@ export async function draftLinkedInForJob(
   recipient: DraftRecipient,
   seekerInput: SeekerPrefs
 ): Promise<{ draft?: LinkedInDraft; error?: string }> {
-  const text = pastedProfile.trim();
   if (!recipient?.email?.includes("@")) return { error: "Find their email first." };
-  if (!text) return { error: "Paste their LinkedIn profile so the note can be personal." };
+  // No profile found or pasted: draft from what the email lookup knows.
+  const text =
+    pastedProfile.trim() ||
+    [recipient.name, recipient.title, recipient.company].filter(Boolean).join(" — ") +
+      "\n(No profile details available — keep the note general; don't invent specifics about them.)";
   if (!hasOpenAIConfig()) return { error: NO_KEY };
   try {
     const seeker = normalizeSeeker(seekerInput);
