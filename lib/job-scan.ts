@@ -3,6 +3,7 @@ import { normalizeCompany, scanWatchList } from "@/lib/sources/ats";
 import type { FetchLike } from "@/lib/sources/http";
 import { scanLinkedIn } from "@/lib/sources/linkedin";
 import { scanSimplify } from "@/lib/sources/simplify";
+import type { ResumeTarget } from "@/lib/target";
 import type { Job, JobSource } from "@/lib/types";
 
 export type ScanSourceId = "watchlist" | "simplify" | "linkedin";
@@ -84,9 +85,9 @@ function freshFirst(a: Job, b: Job): number {
 }
 
 type Scanners = {
-  watchlist: (fetchImpl: FetchLike, locationId: string) => Promise<{ jobs: Job[]; failed: string[] }>;
-  simplify: (fetchImpl: FetchLike, locationId: string) => Promise<Job[]>;
-  linkedin: (fetchImpl: FetchLike, locationId: string) => Promise<Job[]>;
+  watchlist: (fetchImpl: FetchLike, locationId: string, target: ResumeTarget | null) => Promise<{ jobs: Job[]; failed: string[] }>;
+  simplify: (fetchImpl: FetchLike, locationId: string, target: ResumeTarget | null) => Promise<Job[]>;
+  linkedin: (fetchImpl: FetchLike, locationId: string, target: ResumeTarget | null) => Promise<Job[]>;
 };
 
 const DEFAULT_SCANNERS: Scanners = {
@@ -106,11 +107,12 @@ export async function scanAllSources(
   const fetchImpl = options.fetchImpl ?? fetch;
   const scanners = { ...DEFAULT_SCANNERS, ...options.scanners };
   const { locationId } = context;
+  const target = context.target ?? null;
 
   const [watch, simplify, linkedin] = await Promise.allSettled([
-    scanners.watchlist(fetchImpl, locationId),
-    scanners.simplify(fetchImpl, locationId),
-    scanners.linkedin(fetchImpl, locationId),
+    scanners.watchlist(fetchImpl, locationId, target),
+    scanners.simplify(fetchImpl, locationId, target),
+    scanners.linkedin(fetchImpl, locationId, target),
   ]);
 
   const sources: SourceStatus[] = [];

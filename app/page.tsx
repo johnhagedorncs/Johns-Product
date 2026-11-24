@@ -9,7 +9,7 @@ export default function HomePage() {
       <div>
         <h1 className="text-6xl">Inbox</h1>
         <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-          Fresh new-grad roles from your watch list, SimplifyJobs, and LinkedIn — scored against
+          Fresh roles from your watch list, SimplifyJobs, and LinkedIn — scored against
           your resume. Apply the same day, then send a warm note.
         </p>
       </div>

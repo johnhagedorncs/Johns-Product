@@ -62,16 +62,16 @@ describe("LinkedIn search cards", () => {
 
   it("keeps matching roles across queries once each", async () => {
     const fetchImpl = fakeFetch([["seeMoreJobPostings", page]]);
-    const jobs = await scanLinkedIn(fetchImpl, "nyc", ["a", "b"]);
+    const jobs = await scanLinkedIn(fetchImpl, "nyc", null, ["a", "b"]);
     expect(jobs.map((job) => job.company)).toEqual(["DoorDash", "Uniswap"]);
     expect(jobs[0]).toMatchObject({ id: "li-111", source: "linkedin", onWatchList: true, tier: "B" });
     expect(jobs[1].onWatchList).toBe(false);
   });
 
   it("reports LinkedIn as down only when every query fails", async () => {
-    await expect(scanLinkedIn(fakeFetch([["seeMore", "", 429]]), "nyc", ["a"])).rejects.toThrow(/rate limited/);
+    await expect(scanLinkedIn(fakeFetch([["seeMore", "", 429]]), "nyc", null, ["a"])).rejects.toThrow(/rate limited/);
     const partial = fakeFetch([["keywords=ok", page]]);
-    expect(await scanLinkedIn(partial, "nyc", ["ok", "bad"])).toHaveLength(2);
+    expect(await scanLinkedIn(partial, "nyc", null, ["ok", "bad"])).toHaveLength(2);
   });
 });
 

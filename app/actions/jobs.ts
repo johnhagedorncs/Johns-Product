@@ -5,7 +5,7 @@ import { scoreFit } from "@/lib/ai/score-fit";
 import { combineFit, ruleFit } from "@/lib/fit";
 import { scanAllSources, type ScanResult } from "@/lib/job-scan";
 import { getProfile } from "@/lib/profile";
-import { effectiveResume, normalizeSeeker, profileForSeeker, type SeekerPrefs } from "@/lib/seeker";
+import { effectiveResume, normalizeSeeker, profileForSeeker, seekerTarget, type SeekerPrefs } from "@/lib/seeker";
 import { pool } from "@/lib/sources/http";
 import { normalizeCompany, watchEntry } from "@/lib/sources/ats";
 import { fetchJobDetail, jobFromUrl } from "@/lib/sources/detail";
@@ -17,7 +17,7 @@ const MAX_ENRICH = 8;
 
 export async function scanJobs(seekerInput: Partial<SeekerPrefs>): Promise<ScanResult> {
   const seeker = normalizeSeeker(seekerInput);
-  return scanAllSources({ resumeText: effectiveResume(seeker), locationId: seeker.locationId });
+  return scanAllSources({ resumeText: effectiveResume(seeker), locationId: seeker.locationId, target: seekerTarget(seeker) });
 }
 
 export type EnrichedJob = {
@@ -42,7 +42,7 @@ export async function enrichJobs(
   const seeker = normalizeSeeker(seekerInput);
   const resumeText = effectiveResume(seeker);
   const profile = profileForSeeker(getProfile(), seeker);
-  const context = { resumeText, locationId: seeker.locationId };
+  const context = { resumeText, locationId: seeker.locationId, target: seekerTarget(seeker) };
   const aiAvailable = hasOpenAIConfig();
   const useAi = aiAvailable && options.ai !== false;
 
@@ -90,7 +90,7 @@ export async function importJobUrl(
   try {
     const seeker = normalizeSeeker(seekerInput);
     const job = await jobFromUrl(url);
-    const fit = ruleFit(job, { resumeText: effectiveResume(seeker), locationId: seeker.locationId });
+    const fit = ruleFit(job, { resumeText: effectiveResume(seeker), locationId: seeker.locationId, target: seekerTarget(seeker) });
     return { job: { ...job, fit, fitScore: fit.score } };
   } catch (err) {
     return { error: err instanceof Error ? err.message.slice(0, 200) : "Could not read that link." };

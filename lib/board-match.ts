@@ -1,4 +1,5 @@
 import { locationMatches } from "@/lib/locations";
+import { titleExcluded, titleFamily, type ResumeTarget } from "@/lib/target";
 import type { JobTier } from "@/lib/types";
 
 export const FAMILY =
@@ -12,16 +13,16 @@ export const EARLY =
 
 export const BOARD_USER_AGENT = "Mozilla/5.0 warm-apply";
 
+/** Right place and right kind of role: the uploaded resume's target, or the saved defaults. */
 export function matchesRole(
   title: string,
   location: string,
-  locationId = "nyc"
+  locationId = "nyc",
+  target: ResumeTarget | null = null
 ): boolean {
-  return (
-    locationMatches(location, locationId) &&
-    FAMILY.test(title) &&
-    !EXCLUDE.test(title)
-  );
+  if (!locationMatches(location, locationId)) return false;
+  if (target) return titleFamily(target).test(title) && !titleExcluded(title, target);
+  return FAMILY.test(title) && !EXCLUDE.test(title);
 }
 
 export function isEarlyCareer(title: string): boolean {

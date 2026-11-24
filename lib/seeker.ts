@@ -2,6 +2,7 @@ import { DEFAULT_LOCATION, locationLabel, normalizeLocation } from "@/lib/locati
 import { savedResumeText, type Profile } from "@/lib/profile";
 import { gradYear, hookLabels, resumeHooks } from "@/lib/resume-hooks";
 import { extractSkills } from "@/lib/skills";
+import { guessTarget, nameFromResume, normalizeTarget, type ResumeTarget } from "@/lib/target";
 
 export const SEEKER_STORAGE_KEY = "warm-apply-seeker";
 
@@ -10,6 +11,8 @@ export type SeekerPrefs = {
   locationId: string;
   resumeText: string;
   resumeFileName: string;
+  /** What the uploaded resume searches for; null for the saved resume. */
+  target: ResumeTarget | null;
 };
 
 export function defaultSeekerPrefs(): SeekerPrefs {
@@ -18,6 +21,7 @@ export function defaultSeekerPrefs(): SeekerPrefs {
     locationId: DEFAULT_LOCATION,
     resumeText: "",
     resumeFileName: "",
+    target: null,
   };
 }
 
@@ -36,7 +40,18 @@ export function normalizeSeeker(
       typeof input?.resumeFileName === "string"
         ? input.resumeFileName.slice(0, 180)
         : fallback.resumeFileName,
+    target: normalizeTarget(input?.target),
   };
+}
+
+/**
+ * The uploaded resume's target, or a keyword guess when it hasn't been read
+ * yet. null for the saved resume, which keeps the app's original defaults.
+ */
+export function seekerTarget(prefs: Pick<SeekerPrefs, "resumeText" | "target">): ResumeTarget | null {
+  const resume = prefs.resumeText.trim();
+  if (!resume) return null;
+  return prefs.target ?? guessTarget(resume);
 }
 
 export function parseSeekerPrefs(raw: string | null): SeekerPrefs {
@@ -51,20 +66,24 @@ export function parseSeekerPrefs(raw: string | null): SeekerPrefs {
 export function profileForSeeker(base: Profile, prefs: SeekerPrefs): Profile {
   const seeker = normalizeSeeker(prefs);
   const location = locationLabel(seeker.locationId);
-  const custom = Boolean(seeker.name.trim() || seeker.resumeText.trim());
+  const resume = seeker.resumeText.trim();
+  const custom = Boolean(seeker.name.trim() || resume);
   if (!custom) {
     if (seeker.locationId === DEFAULT_LOCATION) return base;
     return { ...base, location };
   }
-  const name = seeker.name.trim() || base.name;
-  const resume = seeker.resumeText.trim();
+  const target = seekerTarget(seeker);
+  // An uploaded resume is someone else's (or a new version): never fall back
+  // to the saved profile's name, school or target roles.
+  const name = seeker.name.trim() || target?.name || (resume ? nameFromResume(resume) : "") || (resume ? "" : base.name);
   return {
     name,
     summary: resume || `${name} is targeting roles in ${location}.`,
-    school: seeker.name.trim() ? "" : base.school,
-    fraternity: seeker.name.trim() ? "" : base.fraternity,
+    school: resume || seeker.name.trim() ? "" : base.school,
+    fraternity: resume || seeker.name.trim() ? "" : base.fraternity,
     location,
-    targetRoles: base.targetRoles,
+    targetRoles: target?.roles ?? base.targetRoles,
+    level: target?.level ?? base.level,
     proofPoints: [],
     pitch: resume ? resume.slice(0, 280) : `${name} · ${location}`,
   };
@@ -96,6 +115,9 @@ export type ResumeSnapshot = {
   gradYear: number | null;
   skills: string[];
   hooks: string[];
+  /** Job titles the scan searches for; empty for the saved resume's defaults. */
+  roles: string[];
+  level: ResumeTarget["level"] | null;
 };
 
 /** What the scorer will read — shown on the home page so a bad PDF parse is obvious. */
@@ -108,5 +130,7 @@ export function resumeSnapshot(prefs: SeekerPrefs): ResumeSnapshot {
     gradYear: gradYear(text),
     skills: extractSkills(text),
     hooks: hookLabels(resumeHooks(text)),
+    roles: seekerTarget(prefs)?.roles ?? [],
+    level: seekerTarget(prefs)?.level ?? null,
   };
 }

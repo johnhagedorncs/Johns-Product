@@ -1,6 +1,7 @@
 import { jobIdFromUrl, matchesRole, tierLetter } from "@/lib/board-match";
 import { watchEntry } from "@/lib/sources/ats";
 import { asRecord, fetchJson, type FetchLike } from "@/lib/sources/http";
+import type { ResumeTarget } from "@/lib/target";
 import type { Job } from "@/lib/types";
 
 /** SimplifyJobs' community-maintained new-grad list (the JSON behind the GitHub README). */
@@ -10,7 +11,12 @@ export const SIMPLIFY_NEW_GRAD_URL =
 const SKIP_CATEGORIES = /hardware/i;
 const MAX_AGE_DAYS = 45;
 
-export function simplifyJobs(data: unknown, locationId: string, now = Date.now()): Job[] {
+export function simplifyJobs(
+  data: unknown,
+  locationId: string,
+  now = Date.now(),
+  target: ResumeTarget | null = null
+): Job[] {
   const rows = Array.isArray(data) ? data : [];
   const jobs: Job[] = [];
   for (const raw of rows) {
@@ -23,7 +29,7 @@ export function simplifyJobs(data: unknown, locationId: string, now = Date.now()
     const locations = Array.isArray(row.locations) ? row.locations.map(String) : [];
     const location = locations.join(" / ");
     if (!company || !title || !/^https?:\/\//.test(url)) continue;
-    if (!matchesRole(title, location, locationId)) continue;
+    if (!matchesRole(title, location, locationId, target)) continue;
     const postedSeconds = Number(row.date_posted);
     const postedMs = Number.isFinite(postedSeconds) && postedSeconds > 0 ? postedSeconds * 1000 : now;
     if (now - postedMs > MAX_AGE_DAYS * 86_400_000) continue;
@@ -48,6 +54,12 @@ export function simplifyJobs(data: unknown, locationId: string, now = Date.now()
   return jobs;
 }
 
-export async function scanSimplify(fetchImpl: FetchLike = fetch, locationId = "nyc"): Promise<Job[]> {
-  return simplifyJobs(await fetchJson(SIMPLIFY_NEW_GRAD_URL, fetchImpl, 20000), locationId);
+/** A new-grad list: skipped for experienced candidates. */
+export async function scanSimplify(
+  fetchImpl: FetchLike = fetch,
+  locationId = "nyc",
+  target: ResumeTarget | null = null
+): Promise<Job[]> {
+  if (target?.level === "experienced") return [];
+  return simplifyJobs(await fetchJson(SIMPLIFY_NEW_GRAD_URL, fetchImpl, 20000), locationId, Date.now(), target);
 }

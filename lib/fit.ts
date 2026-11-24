@@ -2,11 +2,14 @@ import { isEarlyCareer } from "@/lib/board-match";
 import { locationLabel, locationMatches } from "@/lib/locations";
 import { gradYear } from "@/lib/resume-hooks";
 import { matchSkills } from "@/lib/skills";
+import { titleFamily, type ResumeTarget } from "@/lib/target";
 import type { FitAction, FitCheck, Job, JobFitResult } from "@/lib/types";
 
 export type FitContext = {
   resumeText: string;
   locationId: string;
+  /** From an uploaded resume; absent/null keeps the saved new-grad software defaults. */
+  target?: ResumeTarget | null;
 };
 
 const TARGET_FAMILY =
@@ -88,7 +91,17 @@ export function ruleFit(job: Job, context: FitContext): JobFitResult {
     }
   }
 
-  if (OFF_TARGET.test(job.title)) {
+  const target = context.target ?? null;
+  const experienced = target?.level === "experienced";
+  if (target) {
+    if (titleFamily(target).test(job.title)) {
+      score += 0.5;
+      checks.push({ label: "Role", level: "good", detail: `Matches your target roles (${target.roles.slice(0, 2).join(", ")})` });
+    } else {
+      score -= 1.25;
+      checks.push({ label: "Role", level: "warn", detail: "Outside the roles your resume points to" });
+    }
+  } else if (OFF_TARGET.test(job.title)) {
     score -= 1.25;
     checks.push({ label: "Role", level: "warn", detail: "Outside your target role families" });
   } else if (TARGET_FAMILY.test(job.title)) {
@@ -97,7 +110,9 @@ export function ruleFit(job: Job, context: FitContext): JobFitResult {
   }
 
   const early = isEarlyCareer(job.title) || EARLY_TEXT.test(description);
-  if (early) {
+  if (experienced) {
+    // Experienced resumes aren't graded on the new-grad label.
+  } else if (early) {
     score += 0.75;
     checks.push({ label: "Level", level: "good", detail: "Posted as new grad / early career" });
   } else if (description) {
@@ -110,7 +125,19 @@ export function ruleFit(job: Job, context: FitContext): JobFitResult {
 
   const blocks: string[] = [];
   const years = yearsRequired(description);
-  if (years !== null) {
+  if (years !== null && experienced) {
+    const have = target?.years ?? 0;
+    if (years >= have + 5) {
+      score -= 2.5;
+      blocks.push(`${years}+ years of experience required; your resume shows about ${have}`);
+    } else if (years >= have + 2) {
+      score -= 1;
+      checks.push({ label: "Experience", level: "warn", detail: `Asks for ${years}+ years; your resume shows about ${have}` });
+    } else {
+      score += 0.25;
+      checks.push({ label: "Experience", level: "good", detail: `Asks for ${years}+ years; you have about ${have}` });
+    }
+  } else if (years !== null) {
     if (years >= 5) {
       score -= 2.5;
       blocks.push(`${years}+ years of experience required`);
@@ -125,7 +152,7 @@ export function ruleFit(job: Job, context: FitContext): JobFitResult {
     }
   }
 
-  const youGrad = gradYear(context.resumeText);
+  const youGrad = experienced ? null : gradYear(context.resumeText);
   const window = gradWindow(posting);
   if (youGrad && window.length > 0) {
     const low = window[0];

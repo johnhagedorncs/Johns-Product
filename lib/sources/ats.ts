@@ -8,6 +8,7 @@ import {
   toPostedAt,
 } from "@/lib/board-match";
 import { asRecord, fetchJson, pool, type FetchLike } from "@/lib/sources/http";
+import type { ResumeTarget } from "@/lib/target";
 import type { Job, JobSource } from "@/lib/types";
 
 export type WatchCompany = {
@@ -92,7 +93,8 @@ function greenhouseDetail(row: Record<string, unknown> | null): {
 async function greenhouseJobs(
   company: WatchCompany,
   fetchImpl: FetchLike,
-  locationId: string
+  locationId: string,
+  target: ResumeTarget | null = null
 ): Promise<Job[]> {
   const data = asRecord(
     await fetchJson(`https://boards-api.greenhouse.io/v1/boards/${company.slug}/jobs`, fetchImpl)
@@ -101,7 +103,7 @@ async function greenhouseJobs(
     .map(asRecord)
     .filter((row): row is Record<string, unknown> => Boolean(row))
     .filter((row) =>
-      matchesRole(String(row.title ?? ""), String(asRecord(row.location)?.name ?? ""), locationId)
+      matchesRole(String(row.title ?? ""), String(asRecord(row.location)?.name ?? ""), locationId, target)
     )
     .filter((row) => row.absolute_url);
 
@@ -143,7 +145,12 @@ function ashbyRaw(row: Record<string, unknown>): Raw {
   };
 }
 
-async function ashbyJobs(company: WatchCompany, fetchImpl: FetchLike, locationId: string): Promise<Job[]> {
+async function ashbyJobs(
+  company: WatchCompany,
+  fetchImpl: FetchLike,
+  locationId: string,
+  target: ResumeTarget | null = null
+): Promise<Job[]> {
   const data = asRecord(
     await fetchJson(`https://api.ashbyhq.com/posting-api/job-board/${company.slug}`, fetchImpl)
   );
@@ -152,7 +159,7 @@ async function ashbyJobs(company: WatchCompany, fetchImpl: FetchLike, locationId
     const row = asRecord(raw);
     if (!row || row.isListed === false) continue;
     const item = ashbyRaw(row);
-    if (!item.url || !matchesRole(item.title, item.location, locationId)) continue;
+    if (!item.url || !matchesRole(item.title, item.location, locationId, target)) continue;
     jobs.push(toJob(company, "ashby", item));
   }
   return jobs;
@@ -184,14 +191,19 @@ function leverRaw(row: Record<string, unknown>): Raw {
   };
 }
 
-async function leverJobs(company: WatchCompany, fetchImpl: FetchLike, locationId: string): Promise<Job[]> {
+async function leverJobs(
+  company: WatchCompany,
+  fetchImpl: FetchLike,
+  locationId: string,
+  target: ResumeTarget | null = null
+): Promise<Job[]> {
   const data = await fetchJson(`https://api.lever.co/v0/postings/${company.slug}?mode=json`, fetchImpl);
   const jobs: Job[] = [];
   for (const raw of Array.isArray(data) ? data : []) {
     const row = asRecord(raw);
     if (!row) continue;
     const item = leverRaw(row);
-    if (!item.url || !matchesRole(item.title, item.location, locationId)) continue;
+    if (!item.url || !matchesRole(item.title, item.location, locationId, target)) continue;
     jobs.push(toJob(company, "lever", item));
   }
   return jobs;
@@ -200,22 +212,24 @@ async function leverJobs(company: WatchCompany, fetchImpl: FetchLike, locationId
 export async function jobsForCompany(
   company: WatchCompany,
   fetchImpl: FetchLike,
-  locationId: string
+  locationId: string,
+  target: ResumeTarget | null = null
 ): Promise<Job[]> {
-  if (company.ats === "greenhouse") return greenhouseJobs(company, fetchImpl, locationId);
-  if (company.ats === "ashby") return ashbyJobs(company, fetchImpl, locationId);
-  if (company.ats === "lever") return leverJobs(company, fetchImpl, locationId);
+  if (company.ats === "greenhouse") return greenhouseJobs(company, fetchImpl, locationId, target);
+  if (company.ats === "ashby") return ashbyJobs(company, fetchImpl, locationId, target);
+  if (company.ats === "lever") return leverJobs(company, fetchImpl, locationId, target);
   return [];
 }
 
 export async function scanWatchList(
   fetchImpl: FetchLike = fetch,
-  locationId = "nyc"
+  locationId = "nyc",
+  target: ResumeTarget | null = null
 ): Promise<{ jobs: Job[]; failed: string[] }> {
   const failed: string[] = [];
   const batches = await pool(watchCompanies(), 8, async (company) => {
     try {
-      return await jobsForCompany(company, fetchImpl, locationId);
+      return await jobsForCompany(company, fetchImpl, locationId, target);
     } catch {
       failed.push(company.name);
       return [] as Job[];

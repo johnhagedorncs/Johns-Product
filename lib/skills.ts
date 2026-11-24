@@ -68,6 +68,15 @@ const SKILLS: SkillDef[] = [
   { label: "pandas/NumPy", patterns: words("pandas", "numpy") },
   { label: "Computer vision", patterns: words("computer vision", "cnn", "image classification") },
   { label: "Anomaly detection", patterns: words("anomaly detection") },
+  // Analytics / BI
+  { label: "Excel", patterns: words("excel", "spreadsheets", "vlookup", "pivot tables") },
+  { label: "Tableau", patterns: words("tableau") },
+  { label: "Power BI", patterns: words("power bi", "powerbi", "dax") },
+  { label: "Looker", patterns: words("looker", "lookml") },
+  { label: "Data visualization", patterns: words("data visualization", "dashboards", "dashboard", "visualización de datos") },
+  { label: "Statistics", patterns: words("statistics", "statistical analysis", "regression", "hypothesis testing", "estadística") },
+  { label: "A/B testing", patterns: words("a/b testing", "ab testing", "experimentation") },
+  { label: "R", patterns: [/\bR\b(?=\s*(?:,|\/|\)|and|programming|studio|language))/, /\brstudio\b/i] },
   // Practices
   { label: "Testing", patterns: words("unit tests", "testing", "pytest", "test automation") },
   { label: "System design", patterns: words("system design", "systems design") },

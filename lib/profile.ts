@@ -9,6 +9,8 @@ export interface Profile {
   targetRoles: string[];
   proofPoints: string[];
   pitch: string;
+  /** Early career unless an uploaded resume says otherwise */
+  level?: "entry" | "experienced";
   /** Saved resume used until a PDF is uploaded */
   resumeText?: string;
 }

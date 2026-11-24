@@ -64,7 +64,7 @@ export async function draftFromLinkedInPaste(
     modelTier: "smart",
     schema: LinkedInDraftSchema,
     schemaName: "linkedin_outreach",
-    input: `Draft outreach from ${profile.name} to the person in the pasted LinkedIn profile. ${profile.name} sends it themselves.
+    input: `Draft outreach from ${profile.name || "the candidate whose resume is below"} to the person in the pasted LinkedIn profile. The candidate sends it themselves.
 
 Candidate resume:
 """
@@ -72,7 +72,10 @@ ${resumeText.slice(0, 6000)}
 """
 
 Candidate profile (use for location and school when resume is thin):
+Name: ${profile.name || "the name at the top of the resume"}
 School: ${profile.school || "from resume"}
+Career stage: ${profile.level === "experienced" ? "experienced professional (not a student)" : "student or recent grad"}
+Target roles: ${profile.targetRoles.join(", ")}
 Target location: ${profile.location}
 Pitch: ${profile.pitch}
 
@@ -94,7 +97,7 @@ Return:
 - subject: a short, specific email subject line (under 70 characters), e.g. "UCSB grad interested in {company}'s {team}". No clickbait.
 - sharedHook: the single strongest real overlap (same school, past employer, group, team, or tech) — "" if none. Never invent one.
 - rankReason: one line on why this person is worth a note for this role.
-- connectionNote: the email they will send, following this structure (personalize every bracket; skip school paragraphs if there is no real shared school). Use plain text with line breaks between paragraphs. No "pick your brain", no referral ask yet. At most 4000 characters.
+- connectionNote: the email they will send, following this structure (personalize every bracket; skip school paragraphs if there is no real shared school). Sign it with the candidate's own name from the resume, never anyone else's. If the candidate is an experienced professional rather than a student, replace the student intro with their current role and field (from the resume) and drop "after I graduate". Use plain text with line breaks between paragraphs. No "pick your brain", no referral ask yet. At most 4000 characters.
 
 Template to follow:
 ${MESSAGE_TEMPLATE}`,

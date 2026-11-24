@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { FileText, Loader2, RotateCcw } from "lucide-react";
-import { extractResumePdf } from "@/app/actions/resume";
+import { analyzeResume, extractResumePdf } from "@/app/actions/resume";
 import { Chip } from "@/components/chip";
 import { locationLabel, normalizeLocation, TARGET_LOCATIONS } from "@/lib/locations";
+import { requestInboxScan } from "@/lib/inbox-session";
 import { validatePdfUpload } from "@/lib/pdf-text";
 import {
   defaultSeekerPrefs,
@@ -30,6 +31,16 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
     setPrefs(next);
     setPlace(locationLabel(next.locationId));
     onChange?.(next);
+    // Resumes uploaded before targets existed: read it once in the background.
+    if (next.resumeText.trim() && !next.target) {
+      void analyzeResume(next.resumeText)
+        .then(({ target }) => {
+          if (!target) return;
+          const latest = parseSeekerPrefs(localStorage.getItem(SEEKER_STORAGE_KEY));
+          if (latest.resumeText === next.resumeText) commit({ ...latest, target });
+        })
+        .catch(() => undefined);
+    }
     // Load once. Later edits go through commit().
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -61,7 +72,10 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
         setError(result.error);
         return;
       }
-      commit({ ...prefs, resumeText: result.text, resumeFileName: file.name });
+      // Work out what this resume should search for, then rescan for it.
+      const { target } = await analyzeResume(result.text).catch(() => ({ target: null }));
+      commit({ ...prefs, resumeText: result.text, resumeFileName: file.name, target });
+      requestInboxScan();
     } catch {
       setError("Could not read that PDF. Try exporting it again as a text PDF.");
     } finally {
@@ -108,6 +122,12 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
               </button>
               {snapshot.hooks.length > 0 ? ` · Warm hooks: ${snapshot.hooks.join(", ")}` : ""}
             </p>
+            {snapshot.roles.length > 0 ? (
+              <p className="mt-0.5 text-sm text-secondary-foreground/75">
+                Searching for {snapshot.roles.join(", ")}
+                {snapshot.level === "experienced" ? " · experienced roles" : " · entry-level roles"}
+              </p>
+            ) : null}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2 justify-end">
@@ -155,7 +175,10 @@ export function SeekerSetup({ onChange }: SeekerSetupProps) {
           {snapshot.source === "upload" ? (
             <button
               type="button"
-              onClick={() => commit({ ...prefs, resumeText: "", resumeFileName: "" })}
+              onClick={() => {
+                commit({ ...prefs, resumeText: "", resumeFileName: "", target: null });
+                requestInboxScan();
+              }}
               className="inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-sm text-secondary-foreground/75 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
               aria-label="Use saved resume"
             >

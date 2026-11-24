@@ -52,8 +52,15 @@ describe("seeker prefs", () => {
       ...defaultSeekerPrefs(),
       resumeText: "Built compilers and taught interns.",
     });
-    expect(uploaded.name).toBe("John");
-    expect(uploaded.school).toBe("UC Santa Barbara");
+    // An uploaded resume is someone else's: don't borrow the saved name or school.
+    expect(uploaded.name).toBe("");
+    expect(uploaded.school).toBe("");
+    const frida = profileForSeeker(base, {
+      ...defaultSeekerPrefs(),
+      resumeText: "Frida Luna\nData Analyst at NDT\nSQL, Power BI, Tableau dashboards",
+    });
+    expect(frida.name).toBe("Frida Luna");
+    expect(frida.targetRoles).toContain("data analyst");
     expect(uploaded.summary).toContain("compilers");
   });
 

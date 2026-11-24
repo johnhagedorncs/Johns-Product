@@ -2,6 +2,7 @@ import { isEarlyCareer, matchesRole, plainDescription, stripHtml, tierLetter } f
 import { watchEntry } from "@/lib/sources/ats";
 import { fetchText, pool, type FetchLike } from "@/lib/sources/http";
 import { normalizeLocation } from "@/lib/locations";
+import { linkedInExperience, type ResumeTarget } from "@/lib/target";
 import type { Job } from "@/lib/types";
 
 /**
@@ -41,12 +42,12 @@ export function linkedInLocation(locationId: string): string {
 
 const PAGE_STARTS = [0, 10];
 
-export function linkedInSearchUrl(keywords: string, locationId: string, start = 0): string {
+export function linkedInSearchUrl(keywords: string, locationId: string, start = 0, experience = "2"): string {
   const params = new URLSearchParams({
     keywords,
     location: linkedInLocation(locationId),
     f_TPR: "r604800", // past week
-    f_E: "2", // entry level
+    f_E: experience, // 2 = entry level; "3,4" for experienced resumes
     start: String(start),
   });
   if (locationId === "remote") params.set("f_WT", "2");
@@ -124,8 +125,10 @@ export function linkedInCardToJob(card: LinkedInCard): Job {
 export async function scanLinkedIn(
   fetchImpl: FetchLike = fetch,
   locationId = "nyc",
-  queries = LINKEDIN_QUERIES
+  target: ResumeTarget | null = null,
+  queries = target ? target.roles : LINKEDIN_QUERIES
 ): Promise<Job[]> {
+  const experience = linkedInExperience(target);
   const seen = new Set<string>();
   const jobs: Job[] = [];
   let blocked = 0;
@@ -133,7 +136,7 @@ export async function scanLinkedIn(
   const requests = queries.flatMap((query) => PAGE_STARTS.map((start) => ({ query, start })));
   const pages = await pool(requests, 3, async ({ query, start }) => {
     try {
-      return parseLinkedInCards(await fetchText(linkedInSearchUrl(query, locationId, start), fetchImpl, 10000));
+      return parseLinkedInCards(await fetchText(linkedInSearchUrl(query, locationId, start, experience), fetchImpl, 10000));
     } catch {
       blocked += 1;
       return [];
@@ -143,7 +146,7 @@ export async function scanLinkedIn(
   for (const card of pages.flat()) {
     if (seen.has(card.linkedinId)) continue;
     seen.add(card.linkedinId);
-    if (!matchesRole(card.title, card.location, locationId)) continue;
+    if (!matchesRole(card.title, card.location, locationId, target)) continue;
     jobs.push(linkedInCardToJob(card));
   }
   return jobs;

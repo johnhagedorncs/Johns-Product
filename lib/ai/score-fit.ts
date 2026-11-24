@@ -15,7 +15,12 @@ export const FitScoreSchema = z.object({
 
 export function buildFitPrompt(job: Job, profile: Profile, resumeText: string, rules: JobFitResult): string {
   const checks = (rules.checks ?? []).map((check) => `- [${check.level}] ${check.label}: ${check.detail}`).join("\n");
-  return `You are a blunt new-grad recruiter scoring how well THIS resume fits THIS posting. Return JSON per schema.
+  const experienced = profile.level === "experienced";
+  const levelRules = experienced
+    ? `- The candidate is an experienced professional. Judge seniority by comparing the years and scope the posting asks for with the resume's full-time experience; early-career labels don't matter.`
+    : `- If the posting is not labeled new grad / early career / entry level, assume the bar is 2+ years of full-time work unless it says otherwise: score 3 at most unless the resume clearly beats every must-have. Research engineer/scientist roles at frontier labs expect published research or years of experience.
+- Internships count as experience, but not as full-time years.`;
+  return `You are a blunt ${experienced ? "" : "new-grad "}recruiter scoring how well THIS resume fits THIS posting. Return JSON per schema.
 
 Candidate targets: ${profile.targetRoles.join(", ")} in ${profile.location}.
 
@@ -38,8 +43,8 @@ Skills on both: ${(rules.matchedSkills ?? []).join(", ") || "none"}
 Skills in posting, not on resume: ${(rules.missingSkills ?? []).join(", ") || "none"}
 
 Scoring rubric:
-5 = early-career role in a target family; the resume already shows most must-haves; no blockers.
-4 = good fit; one or two gaps a new grad could credibly close.
+5 = ${experienced ? "right-level" : "early-career"} role in a target family; the resume already shows most must-haves; no blockers.
+4 = good fit; one or two gaps ${experienced ? "the candidate" : "a new grad"} could credibly close.
 3 = plausible stretch; worth applying with a warm note.
 2 = real mismatch (experience level, domain, or core stack) — likely auto-reject.
 1 = not a fit or blocked (clearance, PhD, wrong grad year, senior level).
@@ -49,8 +54,7 @@ Rules:
 - gaps: must-have requirements the resume does not show. Skip nice-to-haves.
 - redFlags: hard blockers only (years required, grad window, clearance/citizenship, PhD, on-site elsewhere). Empty if none.
 - Do not reward keyword overlap alone; judge whether the candidate could pass the screen.
-- If the posting is not labeled new grad / early career / entry level, assume the bar is 2+ years of full-time work unless it says otherwise: score 3 at most unless the resume clearly beats every must-have. Research engineer/scientist roles at frontier labs expect published research or years of experience.
-- Internships count as experience, but not as full-time years.
+${levelRules}
 - Never invent experience that is not on the resume.`;
 }
 

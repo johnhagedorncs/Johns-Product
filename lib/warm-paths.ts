@@ -29,6 +29,11 @@ const FUNCTIONS: Array<[RegExp, string, string]> = [
   [/machine learning|\bml\b/i, "machine learning engineer", "ML engineers"],
   [/applied ai|\bai engineer|\bllm\b/i, "AI engineer", "AI engineers"],
   [/data engineer/i, "data engineer", "Data engineers"],
+  [/data scientist|data science/i, "data scientist", "Data scientists"],
+  [/analyst|analytics|business intelligence/i, "analyst", "Analysts"],
+  [/designer|\bux\b/i, "designer", "Designers"],
+  [/marketing|growth/i, "marketing", "Marketing"],
+  [/financ|accounting|fp&a/i, "finance", "Finance"],
   [/product manager|\bapm\b/i, "product manager", "Product managers"],
   [/infrastructure|platform|devops|\bsre\b/i, "infrastructure engineer", "Infra engineers"],
 ];
