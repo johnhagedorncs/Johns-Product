@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { nameFromLinkedInUrl } from "@/lib/apollo";
 import { buildFinderParams, findWithHunter, parseFinder } from "@/lib/hunter";
 
 describe("hunter", () => {
@@ -10,12 +11,20 @@ describe("hunter", () => {
   it("builds Email Finder params from a URL and/or name + company", () => {
     expect(buildFinderParams({ name: "Maya Lin" })).toBeNull();
     const byUrl = buildFinderParams({ linkedinUrl: "linkedin.com/in/maya-lin?x=1", company: "Deloitte" });
-    expect(byUrl?.get("linkedin_handle")).toBe("https://www.linkedin.com/in/maya-lin");
+    expect(byUrl?.get("linkedin_handle")).toBe("maya-lin");
     expect(byUrl?.get("company")).toBe("Deloitte");
     const byName = buildFinderParams({ name: "Maya Van Lin", company: "Deloitte" });
     expect(byName?.get("first_name")).toBe("Maya");
     expect(byName?.get("last_name")).toBe("Van Lin");
     expect(buildFinderParams({ name: "Maya", company: "Deloitte" })?.get("full_name")).toBe("Maya");
+  });
+
+  it("reads a first + last name off a LinkedIn profile URL", () => {
+    expect(nameFromLinkedInUrl("https://www.linkedin.com/in/shichang-liu-43443a2a5/")).toBe("Shichang Liu");
+    expect(nameFromLinkedInUrl("linkedin.com/in/maya-van-lin")).toBe("Maya Van Lin");
+    expect(nameFromLinkedInUrl("linkedin.com/in/mayalin")).toBe("");
+    expect(nameFromLinkedInUrl("linkedin.com/in/maya-123")).toBe("");
+    expect(nameFromLinkedInUrl("not a url")).toBe("");
   });
 
   it("parses a found email with its score and verification", () => {

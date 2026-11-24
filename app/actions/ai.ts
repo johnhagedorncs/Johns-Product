@@ -10,7 +10,7 @@ import {
   type DraftRecipient,
   type LinkedInDraft,
 } from "@/lib/ai/linkedin-draft";
-import { extractLinkedInUrl, hasApolloConfig, matchContact, type EmailContact } from "@/lib/apollo";
+import { extractLinkedInUrl, hasApolloConfig, matchContact, nameFromLinkedInUrl, type EmailContact } from "@/lib/apollo";
 import { findWithHunter, hasHunterConfig } from "@/lib/hunter";
 import { researchProfile, type ResearchTarget } from "@/lib/ai/profile-research";
 import { tailorResume, type TailorResult } from "@/lib/ai/tailor-resume";
@@ -70,6 +70,10 @@ export async function findContactEmail(
       // Best effort: a name lets the lookup fall back to name + company.
       name = await nameFromPaste(pastedProfile).catch(() => "");
     }
+    // No paste (the usual case now): read the name off the profile URL so
+    // Hunter can still fall back to name + company. A bare LinkedIn handle
+    // alone rarely matches anything in Hunter's data.
+    if (!name && url) name = nameFromLinkedInUrl(url);
     if (!url && !name) {
       if (!pastedProfile.trim()) return { error: "Add their LinkedIn URL or paste their profile first." };
       return { error: "Couldn't read a name from the paste. Add their LinkedIn URL instead." };

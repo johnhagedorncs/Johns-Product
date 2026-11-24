@@ -3,7 +3,7 @@
  * The free plan includes the API (50 credits a month); no credit is used
  * when no email is found.
  */
-import { extractLinkedInUrl, type ContactQuery, type EmailContact } from "@/lib/apollo";
+import { linkedInHandle, type ContactQuery, type EmailContact } from "@/lib/apollo";
 
 const FINDER_URL = "https://api.hunter.io/v2/email-finder";
 
@@ -12,12 +12,13 @@ export function hasHunterConfig(): boolean {
 }
 
 export function buildFinderParams(query: ContactQuery): URLSearchParams | null {
-  const url = query.linkedinUrl ? extractLinkedInUrl(query.linkedinUrl) : "";
+  // Hunter wants the bare handle ("maya-lin"), not the full profile URL.
+  const handle = query.linkedinUrl ? linkedInHandle(query.linkedinUrl) : "";
   const name = query.name?.trim() ?? "";
   const company = query.company?.trim() ?? "";
-  if (!url && !(name && company)) return null;
+  if (!handle && !(name && company)) return null;
   const params = new URLSearchParams();
-  if (url) params.set("linkedin_handle", url);
+  if (handle) params.set("linkedin_handle", handle);
   // Hunter falls back to name + company when the LinkedIn handle isn't on file.
   if (company) params.set("company", company);
   if (name) {

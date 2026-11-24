@@ -39,6 +39,29 @@ export function extractLinkedInUrl(text: string): string {
   return match ? `https://www.linkedin.com/in/${match[1]}` : "";
 }
 
+/** The <slug> in linkedin.com/in/<slug>; "" if there's no profile URL. */
+export function linkedInHandle(text: string): string {
+  const url = extractLinkedInUrl(text);
+  return url ? url.slice(url.lastIndexOf("/") + 1) : "";
+}
+
+/**
+ * Best-guess name from a profile slug: "shichang-liu-43443a2a5" → "Shichang Liu".
+ * Drops LinkedIn's trailing id segments (anything with a digit). "" unless at
+ * least a first and last name are left, since one word isn't enough to search on.
+ */
+export function nameFromLinkedInUrl(text: string): string {
+  let slug = linkedInHandle(text);
+  try {
+    slug = decodeURIComponent(slug);
+  } catch {
+    // keep the raw slug
+  }
+  const words = slug.split(/[-_]+/).filter((word) => word && !/\d/.test(word));
+  if (words.length < 2) return "";
+  return words.map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()).join(" ");
+}
+
 export function buildMatchParams(query: ContactQuery): URLSearchParams | null {
   const params = new URLSearchParams();
   const url = query.linkedinUrl ? extractLinkedInUrl(query.linkedinUrl) : "";
